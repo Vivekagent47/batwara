@@ -19,7 +19,7 @@ export const siteConfig = {
     "trip expense tracker",
     "group expense app",
   ],
-  githubUrl: "",
+  githubUrl: "https://github.com/Vivekagent47/batwara",
 } as const
 
 export function getSiteUrl() {

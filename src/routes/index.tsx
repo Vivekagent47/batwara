@@ -36,8 +36,8 @@ const highlights = [
     icon: ReceiptText,
   },
   {
-    title: "Open source and self-hostable",
-    body: "Batwara is designed as an open-source alternative to closed expense tools, so your team can inspect the logic and host it on your own terms.",
+    title: "Open source and transparent",
+    body: "Batwara is designed as an open-source alternative to closed expense tools, so teams can inspect the logic, understand the product direction, and contribute in public.",
     icon: Github,
   },
 ]
@@ -103,19 +103,19 @@ const useCases = [
 const comparisonPoints = [
   "Batwara is easier to audit than a spreadsheet and easier to own than a closed SaaS expense app.",
   "It is being built as an open-source alternative to Splitwise-style tools, while keeping category-first messaging for broad search demand.",
-  "Self-hosting, transparent split logic, and a single full-stack codebase make it a better fit for users who care about control.",
+  "Transparent split logic and a single full-stack codebase make it a better fit for users who care about clarity and control.",
 ]
 
 const proofPoints = [
   "Single-repo TanStack Start architecture using server functions instead of a separate backend.",
-  "Planned Better Auth, Drizzle ORM, PostgreSQL, Zod, and Docker Compose for clean self-hosting.",
+  "Planned Better Auth, Drizzle ORM, PostgreSQL, and Zod for a clean full-stack foundation.",
   "Transparent balance and settlement logic so users can inspect how amounts are derived.",
 ]
 
 const heroStats = [
   { label: "Split types", value: "4 supported" },
   { label: "Best use cases", value: "Trips, roommates, couples" },
-  { label: "Model", value: "Open source and self-hostable" },
+  { label: "Model", value: "Open source and transparent" },
 ]
 
 const faqItems = [
@@ -127,12 +127,12 @@ const faqItems = [
   {
     question: "Is Batwara open source?",
     answer:
-      "Yes. Batwara is being built as an open-source expense splitting app so teams can inspect the logic, self-host the product, and avoid vendor lock-in.",
+      "Yes. Batwara is being built as an open-source expense splitting app so teams can inspect the logic, follow the product direction, and contribute in public.",
   },
   {
     question: "Is Batwara a Splitwise alternative?",
     answer:
-      "Yes. Batwara is intended to be an open-source alternative to Splitwise-style expense apps, while focusing on transparent calculations, self-hosting, and a calm group-first interface.",
+      "Yes. Batwara is intended to be an open-source alternative to Splitwise-style expense apps, while focusing on transparent calculations and a calm group-first interface.",
   },
   {
     question: "Can Batwara split bills for roommates?",
@@ -152,7 +152,7 @@ const faqItems = [
   {
     question: "Can Batwara be self-hosted?",
     answer:
-      "Yes. Self-hosting is part of the product direction, with a full-stack single-repo architecture and planned Docker Compose deployment for teams that want control.",
+      "Not right now. Batwara is still early, and the current focus is on building the core product experience in public before making deployment promises.",
   },
 ]
 
@@ -269,10 +269,12 @@ function LandingPage() {
 
           <div className="flex items-center gap-3">
             <a
-              href="#open-source"
+              href={siteConfig.githubUrl}
+              target="_blank"
+              rel="noreferrer"
               className="hidden rounded-full border border-border bg-white/70 px-4 py-2 text-sm text-foreground/80 transition-colors hover:bg-white md:inline-flex"
             >
-              Open source
+              View on GitHub
             </a>
             <a
               href="#cta"
@@ -612,20 +614,25 @@ function LandingPage() {
               Open source
             </p>
             <h2 className="mt-4 font-heading text-4xl leading-tight text-foreground sm:text-5xl">
-              Built in the open, ready to be self-hosted.
+              Built in the open, with a transparent product direction.
             </h2>
             <p className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground">
               Batwara is being built as an open-source alternative to closed
-              expense trackers. The goal is a codebase people can inspect, run
-              themselves, and improve without fighting a fragmented
+              expense trackers. The goal is a codebase people can inspect,
+              understand, and improve without fighting a fragmented
               architecture.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href={siteConfig.githubUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-full border border-border bg-white/75 px-4 py-2 text-sm text-foreground/85 transition-colors hover:bg-white"
+              >
+                View repository
+              </a>
               <span className="rounded-full border border-border bg-white/75 px-4 py-2 text-sm text-foreground/85">
                 Open-source product direction
-              </span>
-              <span className="rounded-full border border-border bg-white/75 px-4 py-2 text-sm text-foreground/85">
-                Docker Compose deployment
               </span>
               <span className="rounded-full border border-border bg-white/75 px-4 py-2 text-sm text-foreground/85">
                 Single-repo full-stack setup
@@ -648,11 +655,11 @@ function LandingPage() {
               <div className="rounded-[1.4rem] border border-border/70 bg-white/70 p-5">
                 <Globe className="size-5 text-primary" strokeWidth={1.5} />
                 <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  Self-hostable
+                  Built in public
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  PostgreSQL, Docker Compose, and portable architecture keep
-                  deployment straightforward.
+                  Public code, visible product direction, and a single codebase
+                  make it easier to follow and contribute.
                 </p>
               </div>
             </div>
@@ -768,6 +775,14 @@ function LandingPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
+          <a
+            href={siteConfig.githubUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-foreground"
+          >
+            GitHub
+          </a>
           <a
             href="#features"
             className="transition-colors hover:text-foreground"

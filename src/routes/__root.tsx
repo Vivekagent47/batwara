@@ -7,10 +7,11 @@ import { appEnv } from "@/lib/env"
 import { createAbsoluteUrl, siteConfig } from "@/lib/site-config"
 import { NotFoundPage } from "@/components/not-found"
 
-const Devtools =
-  appEnv.enableDevtools
-    ? lazy(() => import("@/components/devtools").then((mod) => ({ default: mod.Devtools })))
-    : null
+const Devtools = appEnv.enableDevtools
+  ? lazy(() =>
+      import("@/components/devtools").then((mod) => ({ default: mod.Devtools }))
+    )
+  : null
 
 export const Route = createRootRoute({
   head: () => ({
