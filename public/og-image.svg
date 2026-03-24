@@ -1,0 +1,68 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="700" fill="#F4EFE5"/>
+  <rect x="40" y="40" width="1120" height="620" rx="40" fill="url(#panelGradient)"/>
+  <rect x="40" y="40" width="1120" height="620" rx="40" stroke="#D9D0C0" stroke-width="2"/>
+
+  <circle cx="1036" cy="158" r="88" fill="#DEEADF"/>
+  <circle cx="1088" cy="544" r="106" fill="#E7D7C7"/>
+  <circle cx="828" cy="558" r="60" fill="#D9E0EA"/>
+
+  <rect x="94" y="102" width="196" height="54" rx="27" fill="#FCFAF5" stroke="#D8CEC0"/>
+  <circle cx="122" cy="129" r="7" fill="#1A6B3C"/>
+  <circle cx="142" cy="129" r="7" fill="#D16A43"/>
+  <text x="166" y="136" fill="#5F5A50" font-family="DM Sans, sans-serif" font-size="24" font-weight="700">Batwara</text>
+
+  <text x="94" y="218" fill="#18211A" font-family="Fraunces, serif" font-size="64" font-weight="600">
+    <tspan x="94" dy="0">Open-source expense</tspan>
+    <tspan x="94" dy="74">splitting for</tspan>
+    <tspan x="94" dy="74">shared life</tspan>
+  </text>
+
+  <text x="94" y="428" fill="#5E5A52" font-family="DM Sans, sans-serif" font-size="28" font-weight="500">
+    <tspan x="94" dy="0">Track who paid, who owes, and how to settle clearly.</tspan>
+    <tspan x="94" dy="38">Built in public for trips, homes, couples, and small groups.</tspan>
+  </text>
+
+  <rect x="94" y="520" width="316" height="68" rx="34" fill="#1A6B3C"/>
+  <text x="142" y="563" fill="#F8F4EB" font-family="DM Sans, sans-serif" font-size="28" font-weight="700">Split. Track. Settle.</text>
+
+  <g transform="translate(792 128)">
+    <rect width="330" height="402" rx="30" fill="#FCFAF5" stroke="#D7CCBE" stroke-width="2"/>
+
+    <text x="34" y="52" fill="#6A655C" font-family="DM Sans, sans-serif" font-size="22" font-weight="700">Shared balance</text>
+
+    <rect x="34" y="78" width="262" height="104" rx="24" fill="#F3EEE4"/>
+    <text x="58" y="114" fill="#1A6B3C" font-family="DM Mono, monospace" font-size="15" font-weight="700">YOU ARE OWED</text>
+    <text x="58" y="155" fill="#18211A" font-family="Fraunces, serif" font-size="38" font-weight="600">₹ 2,450</text>
+
+    <rect x="34" y="206" width="262" height="108" rx="24" fill="#FBF7F0" stroke="#E4DACB"/>
+    <text x="58" y="238" fill="#6A655C" font-family="DM Sans, sans-serif" font-size="17" font-weight="700">Recent updates</text>
+
+    <circle cx="68" cy="270" r="9" fill="#1A6B3C"/>
+    <text x="90" y="276" fill="#18211A" font-family="DM Sans, sans-serif" font-size="17" font-weight="600">Dinner paid by Aarya</text>
+    <text x="246" y="276" fill="#1A6B3C" font-family="DM Mono, monospace" font-size="15" font-weight="700">+650</text>
+
+    <circle cx="68" cy="302" r="9" fill="#D16A43"/>
+    <text x="90" y="308" fill="#18211A" font-family="DM Sans, sans-serif" font-size="17" font-weight="600">Cab split 4 ways</text>
+    <text x="252" y="308" fill="#8A5742" font-family="DM Mono, monospace" font-size="15" font-weight="700">-180</text>
+
+    <rect x="34" y="340" width="262" height="1" fill="#E4DACC"/>
+
+    <g transform="translate(34 354)">
+      <rect width="118" height="36" rx="18" fill="#E6F0E8"/>
+      <text x="20" y="24" fill="#1A6B3C" font-family="DM Sans, sans-serif" font-size="14" font-weight="700">Transparent</text>
+    </g>
+
+    <g transform="translate(164 354)">
+      <rect width="132" height="36" rx="18" fill="#EFE7DB"/>
+      <text x="18" y="24" fill="#6B655C" font-family="DM Sans, sans-serif" font-size="14" font-weight="700">Open source</text>
+    </g>
+  </g>
+
+  <defs>
+    <linearGradient id="panelGradient" x1="84" y1="72" x2="1122" y2="652" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#EFE5D8"/>
+    </linearGradient>
+  </defs>
+</svg>
