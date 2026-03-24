@@ -4,6 +4,8 @@
 
 Batwara is an open-source expense splitting app for shared life.
 
+Repository: [github.com/Vivekagent47/batwara](https://github.com/Vivekagent47/batwara)
+
 It is being built for people who regularly spend together and need a calmer, clearer way to track shared expenses, understand balances, and settle fairly. That includes trips, shared homes, couples, friend groups, and any small group managing money together.
 
 ## What Batwara Is
@@ -31,7 +33,7 @@ We are building Batwara to make that experience feel more human.
 
 The goal is not only to split bills. The goal is to make shared money feel understandable, transparent, and less stressful.
 
-The project is also open source because that matters for this kind of product. Money-related tools benefit from transparency. People should be able to inspect the code, contribute improvements, self-host in the future, and understand how the product is evolving.
+The project is also open source because that matters for this kind of product. Money-related tools benefit from transparency. People should be able to inspect the code, contribute improvements, and understand how the product is evolving.
 
 ## Project Goals
 
@@ -76,7 +78,6 @@ Planned areas of work include:
 - Flexible bill splitting flows
 - Clear group balances and settlement suggestions
 - Better support for recurring shared life scenarios
-- Self-hosting-friendly architecture
 - Contributor-friendly open development
 
 The near-term focus is simple: turn the current landing page and app foundation into a real product surface that contributors can build on together.
@@ -199,13 +200,17 @@ We want the project to be:
 - easier to trust and inspect
 - capable of growing with public feedback instead of behind closed doors
 
-The repository is being prepared for its first public push now. The current codebase is early, but that is exactly why this is a useful time to publish it.
+Public repository:
+
+- [https://github.com/Vivekagent47/batwara](https://github.com/Vivekagent47/batwara)
+
+The repository is public now. The current codebase is early, but that is exactly why this is a useful time to publish it.
 
 ## License
 
 A project license has not been added to the repository yet.
 
-Before the first public release on GitHub, this repo should include a proper `LICENSE` file so contributors and users know exactly how Batwara can be used, modified, and shared.
+This repo should include a proper `LICENSE` file so contributors and users know exactly how Batwara can be used, modified, and shared.
 
 ## Roadmap
 
@@ -221,4 +226,4 @@ Near-term priorities:
 
 This repository is intentionally early-stage.
 
-If you are visiting from GitHub after the first public push, expect a project that has a clear direction but is still in its foundation phase. The landing page is real. The product vision is real. The implementation is just beginning.
+If you are visiting from GitHub, expect a project that has a clear direction but is still in its foundation phase. The landing page is real. The product vision is real. The implementation is just beginning.

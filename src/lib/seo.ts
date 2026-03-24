@@ -35,7 +35,7 @@ export function createSoftwareApplicationSchema() {
       "Split bills across groups, trips, roommates, and couples",
       "Handle equal, exact, percentage, and share-based splits",
       "Track balances and suggested settlements",
-      "Use a self-hostable, open-source architecture",
+      "Use an open-source, transparent product architecture",
     ],
   }
 }
