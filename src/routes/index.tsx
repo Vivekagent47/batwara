@@ -1,20 +1,21 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
-  ArrowRight,
-  BookOpenText,
-  Boxes,
-  BrainCircuit,
-  CheckCircle2,
-  Github,
-  Globe,
-  HeartHandshake,
-  HelpCircle,
-  ReceiptText,
-  SearchCheck,
-  ShieldCheck,
-  Sparkles,
-  WalletCards,
-} from "lucide-react"
+  ArrowRight01Icon,
+  BookOpenTextIcon,
+  BrainIcon,
+  CheckmarkCircle02Icon,
+  GithubIcon,
+  Globe02Icon,
+  HandHelpingIcon,
+  HelpCircleIcon,
+  PackageIcon,
+  ReceiptTextIcon,
+  Search01Icon,
+  SecurityCheckIcon,
+  SparklesIcon,
+  WalletCardsIcon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 import { DeferredHeroScene } from "@/components/landing/deferred-hero-scene"
 import {
@@ -28,17 +29,17 @@ const highlights = [
   {
     title: "Split bills with clarity",
     body: "Batwara is a shared expense tracker that shows who paid, who owes, and how to settle with fewer awkward follow-ups.",
-    icon: WalletCards,
+    icon: WalletCardsIcon,
   },
   {
     title: "Built for real group spending",
     body: "Use it as a trip expense tracker, roommate expense tracker, or group expense app for shared homes, couples, and ongoing plans.",
-    icon: ReceiptText,
+    icon: ReceiptTextIcon,
   },
   {
     title: "Open source and transparent",
     body: "Batwara is designed as an open-source alternative to closed expense tools, so teams can inspect the logic, understand the product direction, and contribute in public.",
-    icon: Github,
+    icon: GithubIcon,
   },
 ]
 
@@ -242,7 +243,7 @@ function LandingPage() {
             className="flex items-center gap-3 text-sm font-medium tracking-[0.12em] text-foreground/90 uppercase"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <BookOpenText className="size-4" strokeWidth={1.5} />
+              <HugeiconsIcon icon={BookOpenTextIcon} className="size-4" />
             </span>
             <span className="font-heading text-xl tracking-normal normal-case">
               Batwara
@@ -271,7 +272,7 @@ function LandingPage() {
             <a
               href={siteConfig.githubUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noreferrer noopener"
               className="hidden rounded-full border border-border bg-white/70 px-4 py-2 text-sm text-foreground/80 transition-colors hover:bg-white md:inline-flex"
             >
               View on GitHub
@@ -281,7 +282,11 @@ function LandingPage() {
               className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Start exploring
-              <ArrowRight className="size-4" strokeWidth={1.5} />
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-4"
+                strokeWidth={1.5}
+              />
             </a>
           </div>
         </header>
@@ -289,7 +294,11 @@ function LandingPage() {
         <div className="grid flex-1 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
           <div className="relative z-10 max-w-2xl">
             <div className="animate-batwara-float inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/75 px-4 py-2 text-sm text-foreground/75 shadow-[0_8px_24px_rgba(26,107,60,0.08)] backdrop-blur">
-              <Sparkles className="size-4 text-primary" strokeWidth={1.5} />
+              <HugeiconsIcon
+                icon={SparklesIcon}
+                className="size-4 text-primary"
+                strokeWidth={1.5}
+              />
               Open-source split bills app for groups and shared life
             </div>
 
@@ -311,7 +320,11 @@ function LandingPage() {
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 Explore the product
-                <ArrowRight className="size-4" strokeWidth={1.5} />
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className="size-4"
+                  strokeWidth={1.5}
+                />
               </a>
               <a
                 href="#faq"
@@ -386,16 +399,16 @@ function LandingPage() {
 
       <section
         id="features"
-        className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="grid gap-5 lg:grid-cols-3">
-          {highlights.map(({ icon: Icon, title, body }) => (
+          {highlights.map(({ icon, title, body }) => (
             <article
               key={title}
               className="glass-panel rounded-[1.75rem] border border-white/70 p-6 shadow-[0_18px_40px_rgba(28,28,24,0.06)]"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Icon className="size-5" strokeWidth={1.5} />
+                <HugeiconsIcon icon={icon} className="size-5" strokeWidth={1.5} />
               </div>
               <h2 className="mt-5 text-xl font-semibold text-foreground">
                 {title}
@@ -428,7 +441,8 @@ function LandingPage() {
                     key={item}
                     className="flex items-start gap-3 rounded-2xl border border-white/70 bg-white/60 px-4 py-3"
                   >
-                    <ShieldCheck
+                    <HugeiconsIcon
+                      icon={SecurityCheckIcon}
                       className="mt-0.5 size-4 shrink-0 text-primary"
                       strokeWidth={1.5}
                     />
@@ -445,7 +459,7 @@ function LandingPage() {
 
       <section
         id="use-cases"
-        className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="mb-10 max-w-3xl">
           <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -475,7 +489,7 @@ function LandingPage() {
 
       <section
         id="workflow"
-        className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="mb-10 max-w-2xl">
           <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -505,7 +519,7 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10">
+      <section className="content-visibility-auto mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10">
         <div className="grid gap-8 rounded-[2.2rem] border border-border/70 bg-[#1d241e] px-6 py-8 text-[#f5f1e8] sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:px-10 lg:py-12">
           <div>
             <p className="text-xs font-medium tracking-[0.18em] text-[#bfd6c7] uppercase">
@@ -524,7 +538,8 @@ function LandingPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-[1.6rem] border border-white/10 bg-white/5 p-5">
-              <BrainCircuit
+              <HugeiconsIcon
+                icon={BrainIcon}
                 className="size-5 text-[#9ad0ae]"
                 strokeWidth={1.5}
               />
@@ -537,7 +552,8 @@ function LandingPage() {
               </p>
             </div>
             <div className="rounded-[1.6rem] border border-white/10 bg-white/5 p-5">
-              <HeartHandshake
+              <HugeiconsIcon
+                icon={HandHelpingIcon}
                 className="size-5 text-[#f0bf8d]"
                 strokeWidth={1.5}
               />
@@ -553,7 +569,7 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
+      <section className="content-visibility-auto mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
           <article className="rounded-[2rem] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(246,241,232,0.94))] p-7 shadow-[0_20px_44px_rgba(28,28,24,0.06)]">
             <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -565,7 +581,8 @@ function LandingPage() {
             <div className="mt-6 space-y-3">
               {comparisonPoints.map((point) => (
                 <div key={point} className="flex items-start gap-3">
-                  <SearchCheck
+                  <HugeiconsIcon
+                    icon={Search01Icon}
                     className="mt-1 size-4 shrink-0 text-primary"
                     strokeWidth={1.5}
                   />
@@ -590,7 +607,8 @@ function LandingPage() {
                   key={point}
                   className="flex items-start gap-3 rounded-2xl border border-white/70 bg-[#f8f4eb]/75 px-4 py-3"
                 >
-                  <CheckCircle2
+                  <HugeiconsIcon
+                    icon={CheckmarkCircle02Icon}
                     className="mt-0.5 size-4 shrink-0 text-primary"
                     strokeWidth={1.5}
                   />
@@ -606,7 +624,7 @@ function LandingPage() {
 
       <section
         id="open-source"
-        className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
@@ -626,7 +644,7 @@ function LandingPage() {
               <a
                 href={siteConfig.githubUrl}
                 target="_blank"
-                rel="noreferrer"
+                rel="noreferrer noopener"
                 className="inline-flex rounded-full border border-border bg-white/75 px-4 py-2 text-sm text-foreground/85 transition-colors hover:bg-white"
               >
                 View repository
@@ -643,7 +661,11 @@ function LandingPage() {
           <div className="glass-panel rounded-[2rem] border border-white/70 p-6 shadow-[0_20px_48px_rgba(28,28,24,0.06)]">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-[1.4rem] border border-border/70 bg-white/70 p-5">
-                <Boxes className="size-5 text-primary" strokeWidth={1.5} />
+                <HugeiconsIcon
+                  icon={PackageIcon}
+                  className="size-5 text-primary"
+                  strokeWidth={1.5}
+                />
                 <h3 className="mt-4 text-lg font-semibold text-foreground">
                   Single project
                 </h3>
@@ -653,7 +675,11 @@ function LandingPage() {
                 </p>
               </div>
               <div className="rounded-[1.4rem] border border-border/70 bg-white/70 p-5">
-                <Globe className="size-5 text-primary" strokeWidth={1.5} />
+                <HugeiconsIcon
+                  icon={Globe02Icon}
+                  className="size-5 text-primary"
+                  strokeWidth={1.5}
+                />
                 <h3 className="mt-4 text-lg font-semibold text-foreground">
                   Built in public
                 </h3>
@@ -670,7 +696,8 @@ function LandingPage() {
                   key={point}
                   className="flex items-start gap-3 rounded-2xl border border-white/70 bg-[#f8f4eb]/70 px-4 py-3"
                 >
-                  <Github
+                  <HugeiconsIcon
+                    icon={GithubIcon}
                     className="mt-0.5 size-4 shrink-0 text-primary"
                     strokeWidth={1.5}
                   />
@@ -686,7 +713,7 @@ function LandingPage() {
 
       <section
         id="faq"
-        className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="mb-10 max-w-3xl">
           <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -705,7 +732,8 @@ function LandingPage() {
               className="rounded-[1.8rem] border border-border/70 bg-white/75 p-6 shadow-[0_18px_38px_rgba(28,28,24,0.05)]"
             >
               <div className="flex items-start gap-3">
-                <HelpCircle
+                <HugeiconsIcon
+                  icon={HelpCircleIcon}
                   className="mt-1 size-5 shrink-0 text-primary"
                   strokeWidth={1.5}
                 />
@@ -725,7 +753,7 @@ function LandingPage() {
 
       <section
         id="cta"
-        className="mx-auto max-w-7xl px-5 pt-8 pb-20 sm:px-8 lg:px-10"
+        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 pt-8 pb-20 sm:px-8 lg:px-10"
       >
         <div className="grid gap-8 rounded-[2.1rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.8),rgba(244,239,228,0.95))] px-6 py-8 shadow-[0_20px_48px_rgba(28,28,24,0.07)] sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
           <div>
@@ -748,7 +776,11 @@ function LandingPage() {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               See how it works
-              <ArrowRight className="size-4" strokeWidth={1.5} />
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-4"
+                strokeWidth={1.5}
+              />
             </a>
             <a
               href="#open-source"
@@ -763,7 +795,7 @@ function LandingPage() {
       <footer className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 pb-12 text-sm text-muted-foreground sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <BookOpenText className="size-4" strokeWidth={1.5} />
+            <HugeiconsIcon icon={BookOpenTextIcon} className="size-4" />
           </span>
           <div>
             <p className="font-heading text-xl text-foreground">Batwara</p>
@@ -778,7 +810,7 @@ function LandingPage() {
           <a
             href={siteConfig.githubUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             className="transition-colors hover:text-foreground"
           >
             GitHub

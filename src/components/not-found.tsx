@@ -1,30 +1,31 @@
 import { Link } from "@tanstack/react-router"
 import {
-  ArrowLeft,
-  Compass,
-  Home,
-  ReceiptText,
-  Search,
-  Sparkles,
-} from "lucide-react"
+  ArrowLeft01Icon,
+  Compass01Icon,
+  Home01Icon,
+  ReceiptTextIcon,
+  Search01Icon,
+  SparklesIcon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 const quickLinks = [
   {
     title: "Back to home",
     body: "Return to the main Batwara landing page and start from the core product story.",
-    icon: Home,
+    icon: Home01Icon,
     href: "/",
   },
   {
     title: "Explore features",
     body: "Jump straight into the feature section and see what Batwara is built to handle.",
-    icon: Search,
+    icon: Search01Icon,
     href: "/#features",
   },
   {
     title: "Read the flow",
     body: "See the three-step usage pattern for trips, homes, and shared expenses.",
-    icon: ReceiptText,
+    icon: ReceiptTextIcon,
     href: "/#workflow",
   },
 ]
@@ -44,7 +45,11 @@ export function NotFoundPage() {
 
               <div className="relative z-10">
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/75 px-4 py-2 text-sm text-foreground/75 backdrop-blur">
-                  <Compass className="size-4 text-primary" strokeWidth={1.5} />
+                  <HugeiconsIcon
+                    icon={Compass01Icon}
+                    className="size-4 text-primary"
+                    strokeWidth={1.5}
+                  />
                   Route not found
                 </div>
 
@@ -77,7 +82,11 @@ export function NotFoundPage() {
                     to="/"
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    <ArrowLeft className="size-4" strokeWidth={1.5} />
+                    <HugeiconsIcon
+                      icon={ArrowLeft01Icon}
+                      className="size-4"
+                      strokeWidth={1.5}
+                    />
                     Go home
                   </Link>
                   <a
@@ -93,7 +102,7 @@ export function NotFoundPage() {
 
           <div className="order-2">
             <div className="space-y-4">
-              {quickLinks.map(({ title, body, icon: Icon, href }) => (
+              {quickLinks.map(({ title, body, icon, href }) => (
                 <a
                   key={title}
                   href={href}
@@ -101,14 +110,19 @@ export function NotFoundPage() {
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                      <Icon className="size-5" strokeWidth={1.5} />
+                      <HugeiconsIcon
+                        icon={icon}
+                        className="size-5"
+                        strokeWidth={1.5}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-semibold text-foreground">
                           {title}
                         </h2>
-                        <Sparkles
+                        <HugeiconsIcon
+                          icon={SparklesIcon}
                           className="size-4 text-primary/70 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                           strokeWidth={1.5}
                         />

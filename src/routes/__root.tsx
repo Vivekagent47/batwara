@@ -6,6 +6,7 @@ import { InteractiveBackground } from "@/components/interactive-background"
 import { appEnv } from "@/lib/env"
 import { createAbsoluteUrl, siteConfig } from "@/lib/site-config"
 import { NotFoundPage } from "@/components/not-found"
+import { Toaster } from "@/components/ui/sonner"
 
 const Devtools = appEnv.enableDevtools
   ? lazy(() =>
@@ -68,6 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body className="relative min-h-svh overflow-x-hidden">
         {appEnv.enableInteractiveBackground ? <InteractiveBackground /> : null}
         <div className="relative z-10">{children}</div>
+        <Toaster position="top-right" richColors closeButton />
         {Devtools ? (
           <Suspense fallback={null}>
             <Devtools />

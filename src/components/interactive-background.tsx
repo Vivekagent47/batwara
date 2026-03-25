@@ -16,8 +16,15 @@ export function InteractiveBackground() {
       return
     }
 
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
+    if (reducedMotionQuery.matches) {
+      return
+    }
+
     let frame = 0
+    let isRunning = false
     let isTouching = false
+    let isDocumentVisible = document.visibilityState === "visible"
 
     const target: Point = {
       x: window.innerWidth * 0.5,
@@ -26,6 +33,11 @@ export function InteractiveBackground() {
     const current: Point = { ...target }
 
     const paint = () => {
+      if (!isDocumentVisible) {
+        isRunning = false
+        return
+      }
+
       current.x += (target.x - current.x) * 0.12
       current.y += (target.y - current.y) * 0.12
 
@@ -42,6 +54,24 @@ export function InteractiveBackground() {
       element.style.setProperty("--batwara-drift-y", driftY)
 
       frame = window.requestAnimationFrame(paint)
+    }
+
+    const startPaintLoop = () => {
+      if (isRunning) {
+        return
+      }
+
+      isRunning = true
+      frame = window.requestAnimationFrame(paint)
+    }
+
+    const stopPaintLoop = () => {
+      if (!isRunning) {
+        return
+      }
+
+      window.cancelAnimationFrame(frame)
+      isRunning = false
     }
 
     const updateTarget = (x: number, y: number) => {
@@ -75,20 +105,32 @@ export function InteractiveBackground() {
       updateTarget(window.innerWidth * 0.5, window.innerHeight * 0.28)
     }
 
-    frame = window.requestAnimationFrame(paint)
+    const handleVisibilityChange = () => {
+      isDocumentVisible = document.visibilityState === "visible"
+
+      if (isDocumentVisible) {
+        startPaintLoop()
+      } else {
+        stopPaintLoop()
+      }
+    }
+
+    startPaintLoop()
     window.addEventListener("pointermove", handlePointerMove, { passive: true })
     window.addEventListener("touchstart", handleTouchStart, { passive: true })
     window.addEventListener("touchmove", handleTouchMove, { passive: true })
     window.addEventListener("touchend", handleTouchEnd, { passive: true })
     window.addEventListener("resize", handleResize)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      stopPaintLoop()
       window.removeEventListener("pointermove", handlePointerMove)
       window.removeEventListener("touchstart", handleTouchStart)
       window.removeEventListener("touchmove", handleTouchMove)
       window.removeEventListener("touchend", handleTouchEnd)
       window.removeEventListener("resize", handleResize)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [])
 

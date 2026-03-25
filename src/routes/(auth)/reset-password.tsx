@@ -1,4 +1,7 @@
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
+import { toast } from "sonner"
+import { useState } from "react"
+import type { FormEvent } from "react"
 
 import {
   AuthForm,
@@ -8,33 +11,76 @@ import {
   AuthSubmitButton,
   PasswordField,
   createAuthPageHead,
-  useDemoSubmit,
 } from "@/components/auth/auth-shell"
+import { authClient, getAuthErrorMessage } from "@/lib/auth-client"
 
 const pageDescription = "Set a new password for your Batwara account."
 
 type ResetSearch = {
   state?: "expired"
+  token?: string
+  error?: string
 }
 
 export const Route = createFileRoute("/(auth)/reset-password")({
   validateSearch: (search: Record<string, unknown>): ResetSearch => ({
     state: search.state === "expired" ? "expired" : undefined,
+    token: typeof search.token === "string" ? search.token : undefined,
+    error: typeof search.error === "string" ? search.error : undefined,
   }),
   head: () => createAuthPageHead("Reset Password", pageDescription),
   component: ResetPasswordPage,
 })
 
 function ResetPasswordPage() {
+  const navigate = useNavigate()
   const search = Route.useSearch()
-  const { isPending, status, runDemoSubmit, clearStatus } = useDemoSubmit({
-    outcome: "success",
-    successTitle: "Password reset state ready",
-    successBody:
-      "This screen is prepared for Better Auth token verification and password updates once the backend is connected.",
-  })
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isPending, setIsPending] = useState(false)
 
-  const isExpired = search.state === "expired"
+  const isExpired = search.state === "expired" || !search.token
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!search.token) {
+      toast.error("Reset token missing", {
+        description:
+          "Request a new password reset email and open the link from that message.",
+      })
+      return
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match", {
+        description:
+          "Use the same password in both fields before saving the new password.",
+      })
+      return
+    }
+
+    setIsPending(true)
+
+    const { error } = await authClient.resetPassword({
+      newPassword: password,
+      token: search.token,
+    })
+
+    setIsPending(false)
+
+    if (error) {
+      toast.error("Could not reset password", {
+        description: getAuthErrorMessage(error),
+      })
+      return
+    }
+
+    toast.success("Password updated", {
+      description: "Your Batwara password has been changed. You can sign in now.",
+    })
+    await navigate({ to: "/login" })
+  }
 
   return (
     <AuthShell
@@ -61,7 +107,7 @@ function ResetPasswordPage() {
           <AuthStatusMessage
             tone="error"
             title="This reset link is no longer valid"
-            body="When Better Auth is connected, expired or already-used links will land on this recovery state instead of a blank failure."
+            body="Request a fresh reset link and use the newest email. Batwara sends password reset links with a limited lifetime."
           />
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -81,24 +127,22 @@ function ResetPasswordPage() {
         </div>
       ) : (
         <AuthForm>
-          {status ? <AuthStatusMessage {...status} /> : null}
-
-          <form
-            className="space-y-5"
-            onSubmit={runDemoSubmit}
-            onChange={clearStatus}
-          >
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <PasswordField
               label="New password"
               name="password"
               placeholder="Create a new password"
               autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
             <PasswordField
               label="Confirm new password"
               name="confirmPassword"
               placeholder="Repeat the new password"
               autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
             />
 
             <AuthSubmitButton pending={isPending}>

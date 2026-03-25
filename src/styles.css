@@ -157,6 +157,12 @@
     background: color-mix(in oklab, var(--primary) 24%, white);
     color: var(--foreground);
   }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--primary) 72%, white);
+    outline-offset: 3px;
+  }
 }
 
 @keyframes batwaraFloat {
@@ -255,5 +261,24 @@
 
   .animate-batwara-ambient-delayed {
     animation: batwaraAmbient 22s ease-in-out infinite reverse;
+  }
+
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 960px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-batwara-float,
+  .animate-batwara-drift,
+  .animate-batwara-pulse,
+  .animate-batwara-ambient,
+  .animate-batwara-ambient-delayed {
+    animation: none !important;
   }
 }

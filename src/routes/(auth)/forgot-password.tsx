@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router"
+import { toast } from "sonner"
+import { useState } from "react"
+import type { FormEvent } from "react"
 
 import {
   AuthField,
   AuthForm,
   AuthFormMeta,
   AuthShell,
-  AuthStatusMessage,
   AuthSubmitButton,
   createAuthPageHead,
-  useDemoSubmit,
 } from "@/components/auth/auth-shell"
+import { authClient, getAuthErrorMessage } from "@/lib/auth-client"
 
 const pageDescription =
   "Request a password reset link for your Batwara account."
@@ -20,12 +22,31 @@ export const Route = createFileRoute("/(auth)/forgot-password")({
 })
 
 function ForgotPasswordPage() {
-  const { isPending, status, runDemoSubmit, clearStatus } = useDemoSubmit({
-    outcome: "success",
-    successTitle: "Reset flow previewed",
-    successBody:
-      "If an account matches that email, Better Auth will eventually send a reset link from this screen.",
-  })
+  const [email, setEmail] = useState("")
+  const [isPending, setIsPending] = useState(false)
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsPending(true)
+
+    const { error } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: "/reset-password",
+    })
+
+    setIsPending(false)
+
+    if (error) {
+      toast.error("Could not send reset link", {
+        description: getAuthErrorMessage(error),
+      })
+      return
+    }
+
+    toast.success("Reset link sent", {
+      description: `If ${email} belongs to a Batwara account, a reset link is on the way.`,
+    })
+  }
 
   return (
     <AuthShell
@@ -48,13 +69,7 @@ function ForgotPasswordPage() {
       }
     >
       <AuthForm>
-        {status ? <AuthStatusMessage {...status} /> : null}
-
-        <form
-          className="space-y-5"
-          onSubmit={runDemoSubmit}
-          onChange={clearStatus}
-        >
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <AuthField
             label="Email"
             name="email"
@@ -62,6 +77,8 @@ function ForgotPasswordPage() {
             placeholder="you@example.com"
             autoComplete="email"
             hint="Use the same email you plan to use for sign-in."
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
 
           <AuthSubmitButton pending={isPending}>
