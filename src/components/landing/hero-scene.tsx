@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import {
-  Float,
-  MeshDistortMaterial,
-  RoundedBox,
-  Torus,
-} from "@react-three/drei"
+import { Float } from "@react-three/drei/core/Float"
+import { MeshDistortMaterial } from "@react-three/drei/core/MeshDistortMaterial"
+import { RoundedBox } from "@react-three/drei/core/RoundedBox"
+import { Torus } from "@react-three/drei/core/shapes"
 import type { Group } from "three"
 
 import { HeroSceneFallback } from "@/components/landing/hero-scene-fallback"
@@ -15,6 +13,24 @@ type LedgerCardProps = {
   rotation: [number, number, number]
   color: string
 }
+
+const SCENE_CARDS: Array<LedgerCardProps> = [
+  {
+    position: [-2.5, 1.2, -0.5],
+    rotation: [-0.3, 0.4, -0.2],
+    color: "#1a6b3c",
+  },
+  {
+    position: [2.25, -1.1, -0.4],
+    rotation: [0.28, -0.35, 0.22],
+    color: "#bf5a36",
+  },
+  {
+    position: [2.7, 1.5, -0.9],
+    rotation: [-0.2, -0.3, 0.26],
+    color: "#6d7387",
+  },
+]
 
 function LedgerCard({ position, rotation, color }: LedgerCardProps) {
   const ref = useRef<Group>(null)
@@ -103,7 +119,7 @@ function CoreOrb() {
   return (
     <group ref={ref}>
       <mesh>
-        <icosahedronGeometry args={[1.1, 12]} />
+        <icosahedronGeometry args={[1.1, 5]} />
         <MeshDistortMaterial
           color="#1a6b3c"
           emissive="#0c2e19"
@@ -123,27 +139,6 @@ function CoreOrb() {
 }
 
 function Scene() {
-  const cards = useMemo(
-    () => [
-      {
-        position: [-2.5, 1.2, -0.5] as [number, number, number],
-        rotation: [-0.3, 0.4, -0.2] as [number, number, number],
-        color: "#1a6b3c",
-      },
-      {
-        position: [2.25, -1.1, -0.4] as [number, number, number],
-        rotation: [0.28, -0.35, 0.22] as [number, number, number],
-        color: "#bf5a36",
-      },
-      {
-        position: [2.7, 1.5, -0.9] as [number, number, number],
-        rotation: [-0.2, -0.3, 0.26] as [number, number, number],
-        color: "#6d7387",
-      },
-    ],
-    []
-  )
-
   return (
     <>
       <color attach="background" args={["#000000"]} />
@@ -157,7 +152,7 @@ function Scene() {
         <CoreOrb />
       </Float>
 
-      {cards.map((card) => (
+      {SCENE_CARDS.map((card) => (
         <Float
           key={`${card.position[0]}-${card.position[1]}`}
           speed={1.4}
@@ -179,10 +174,36 @@ function Scene() {
 }
 
 export function HeroScene() {
+  const sceneRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
+  const [isInViewport, setIsInViewport] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const element = sceneRef.current
+    if (!element) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.length === 0) {
+          return
+        }
+
+        setIsInViewport(entries[0].isIntersecting)
+      },
+      { rootMargin: "120px 0px" }
+    )
+
+    observer.observe(element)
+
+    return () => {
+      observer.disconnect()
+    }
   }, [])
 
   if (!mounted) {
@@ -190,9 +211,14 @@ export function HeroScene() {
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+    <div ref={sceneRef} className="absolute inset-0 overflow-hidden rounded-[2rem]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(26,107,60,0.22),transparent_28%),radial-gradient(circle_at_80%_12%,rgba(201,142,45,0.2),transparent_26%),radial-gradient(circle_at_70%_76%,rgba(114,122,146,0.22),transparent_22%)]" />
-      <Canvas camera={{ position: [0, 0, 6.5], fov: 42 }} dpr={[1, 1.8]}>
+      <Canvas
+        frameloop={isInViewport ? "always" : "never"}
+        camera={{ position: [0, 0, 6.5], fov: 42 }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: false, powerPreference: "high-performance" }}
+      >
         <Scene />
       </Canvas>
       <div className="paper-grid pointer-events-none absolute inset-0 opacity-20" />

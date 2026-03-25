@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router"
 import {
-  CheckCircle2,
-  CircleAlert,
-  Eye,
-  EyeOff,
-  LoaderCircle,
-  ShieldCheck,
-} from "lucide-react"
+  AlertCircleIcon,
+  CheckmarkCircle02Icon,
+  Loading03Icon,
+  SecurityCheckIcon,
+  ViewIcon,
+  ViewOffIcon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { useEffect, useId, useRef, useState } from "react"
 import type { FormEvent, InputHTMLAttributes, ReactNode } from "react"
 
@@ -126,7 +127,8 @@ export function AuthShell({
           <aside className="glass-panel flex flex-col justify-between rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(250,247,241,0.88),rgba(243,236,224,0.96))] p-6 shadow-[0_20px_48px_rgba(28,28,24,0.06)]">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-xs font-medium tracking-[0.14em] text-foreground/80 uppercase">
-                <ShieldCheck
+                <HugeiconsIcon
+                  icon={SecurityCheckIcon}
                   className="size-3.5 text-primary"
                   strokeWidth={1.5}
                 />
@@ -145,7 +147,8 @@ export function AuthShell({
                     key={point}
                     className="flex items-start gap-3 rounded-[1.2rem] border border-white/80 bg-white/78 px-4 py-3"
                   >
-                    <CheckCircle2
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle02Icon}
                       className="mt-0.5 size-4 shrink-0 text-primary"
                       strokeWidth={1.5}
                     />
@@ -290,9 +293,17 @@ export function PasswordField({
           className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           {visible ? (
-            <EyeOff className="size-3.5" strokeWidth={1.5} />
+            <HugeiconsIcon
+              icon={ViewOffIcon}
+              className="size-3.5"
+              strokeWidth={1.5}
+            />
           ) : (
-            <Eye className="size-3.5" strokeWidth={1.5} />
+            <HugeiconsIcon
+              icon={ViewIcon}
+              className="size-3.5"
+              strokeWidth={1.5}
+            />
           )}
           {visible ? "Hide" : "Show"}
         </button>
@@ -347,17 +358,20 @@ export function AuthStatusMessage({ tone, title, body }: AuthStatusProps) {
       aria-live="polite"
     >
       {tone === "success" ? (
-        <CheckCircle2
+        <HugeiconsIcon
+          icon={CheckmarkCircle02Icon}
           className="mt-0.5 size-4 shrink-0 text-primary"
           strokeWidth={1.5}
         />
       ) : tone === "error" ? (
-        <CircleAlert
+        <HugeiconsIcon
+          icon={AlertCircleIcon}
           className="mt-0.5 size-4 shrink-0 text-destructive"
           strokeWidth={1.5}
         />
       ) : (
-        <ShieldCheck
+        <HugeiconsIcon
+          icon={SecurityCheckIcon}
           className="mt-0.5 size-4 shrink-0 text-primary"
           strokeWidth={1.5}
         />
@@ -386,7 +400,11 @@ export function AuthSubmitButton({
     >
       {pending ? (
         <>
-          <LoaderCircle className="size-4 animate-spin" strokeWidth={1.5} />
+          <HugeiconsIcon
+            icon={Loading03Icon}
+            className="size-4 animate-spin"
+            strokeWidth={1.5}
+          />
           Working...
         </>
       ) : (
