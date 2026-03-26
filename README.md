@@ -115,8 +115,6 @@ Current environment variables:
   - Absolute app URL used for canonical URLs, sitemap generation, and metadata
 - `VITE_ENABLE_DEVTOOLS`
   - Enables TanStack devtools locally when set to `true`
-- `VITE_ENABLE_INTERACTIVE_BACKGROUND`
-  - Enables the animated pointer-reactive background
 - `VITE_ENABLE_HERO_SCENE`
   - Enables the homepage Three.js hero scene
 - `VITE_ENABLE_HERO_SCENE_ON_MOBILE`

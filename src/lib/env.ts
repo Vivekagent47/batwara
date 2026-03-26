@@ -29,11 +29,10 @@ export const appEnv = {
     import.meta.env.VITE_ENABLE_DEVTOOLS,
     import.meta.env.DEV
   ),
-  enableInteractiveBackground: parseBooleanEnv(
-    import.meta.env.VITE_ENABLE_INTERACTIVE_BACKGROUND,
+  enableHeroScene: parseBooleanEnv(
+    import.meta.env.VITE_ENABLE_HERO_SCENE,
     true
   ),
-  enableHeroScene: parseBooleanEnv(import.meta.env.VITE_ENABLE_HERO_SCENE, true),
   enableHeroSceneOnMobile: parseBooleanEnv(
     import.meta.env.VITE_ENABLE_HERO_SCENE_ON_MOBILE,
     false

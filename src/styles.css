@@ -267,6 +267,26 @@
     content-visibility: auto;
     contain-intrinsic-size: 1px 960px;
   }
+
+  .dashboard-surface {
+    @apply rounded-2xl border border-border/80 bg-background/95 p-3 sm:p-4;
+  }
+
+  .dashboard-list-item {
+    @apply rounded-xl border border-border/70 px-2.5 py-2.5 transition-colors hover:bg-muted/55 sm:px-3 sm:py-3;
+  }
+
+  .dashboard-empty {
+    @apply rounded-xl border border-dashed border-border px-2.5 py-4 text-sm text-muted-foreground sm:px-3 sm:py-5;
+  }
+
+  .dashboard-pill {
+    @apply inline-flex items-center rounded-xl border border-border bg-background/80 px-2.5 py-1.5 text-[11px] text-muted-foreground sm:px-3 sm:py-2 sm:text-xs;
+  }
+
+  .dashboard-label {
+    @apply text-xs text-muted-foreground sm:text-sm;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

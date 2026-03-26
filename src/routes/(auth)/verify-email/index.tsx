@@ -22,7 +22,7 @@ type VerifyEmailSearch = {
   error?: string
 }
 
-export const Route = createFileRoute("/(auth)/verify-email")({
+export const Route = createFileRoute("/(auth)/verify-email/")({
   validateSearch: (search: Record<string, unknown>): VerifyEmailSearch => ({
     email: typeof search.email === "string" ? search.email : undefined,
     status: search.status === "verified" ? "verified" : undefined,
@@ -66,26 +66,31 @@ function VerifyEmailPage() {
     }
 
     setIsPending(true)
-
-    const { error } = await authClient.sendVerificationEmail({
-      email: search.email,
-      callbackURL: `${window.location.origin}/verify-email?status=verified`,
-    })
-
-    setIsPending(false)
-
-    if (error) {
-      const message = getAuthErrorMessage(error)
-      toast.error("Could not send verification email", {
-        description: message,
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email: search.email,
+        callbackURL: `${window.location.origin}/verify-email?status=verified`,
       })
-      return
-    }
 
-    toast.success("Verification email sent", {
-      description:
-        "If that account exists, Batwara has logged the email details in the terminal in development.",
-    })
+      if (error) {
+        const message = getAuthErrorMessage(error)
+        toast.error("Could not send verification email", {
+          description: message,
+        })
+        return
+      }
+
+      toast.success("Verification email sent", {
+        description:
+          "If that account exists, Batwara has logged the email details in the terminal in development.",
+      })
+    } catch (error) {
+      toast.error("Could not send verification email", {
+        description: getAuthErrorMessage(error),
+      })
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (

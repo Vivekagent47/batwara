@@ -17,7 +17,7 @@ import { authClient, getAuthErrorMessage } from "@/lib/auth-client"
 const pageDescription =
   "Create a Batwara account to start tracking shared expenses and group balances."
 
-export const Route = createFileRoute("/(auth)/register")({
+export const Route = createFileRoute("/(auth)/register/")({
   head: () => createAuthPageHead("Create Account", pageDescription),
   component: RegisterPage,
 })
@@ -42,30 +42,35 @@ function RegisterPage() {
     }
 
     setIsPending(true)
+    try {
+      const { error } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+        callbackURL: "/verify-email?status=verified",
+      })
 
-    const { error } = await authClient.signUp.email({
-      name,
-      email,
-      password,
-      callbackURL: "/verify-email?status=verified",
-    })
+      if (error) {
+        toast.error("Could not create your account", {
+          description: getAuthErrorMessage(error),
+        })
+        return
+      }
 
-    setIsPending(false)
-
-    if (error) {
+      toast.success("Account created", {
+        description: "Check your inbox and verify your Batwara email.",
+      })
+      await navigate({
+        to: "/verify-email",
+        search: { email },
+      })
+    } catch (error) {
       toast.error("Could not create your account", {
         description: getAuthErrorMessage(error),
       })
-      return
+    } finally {
+      setIsPending(false)
     }
-
-    toast.success("Account created", {
-      description: "Check your inbox and verify your Batwara email.",
-    })
-    await navigate({
-      to: "/verify-email",
-      search: { email },
-    })
   }
 
   return (

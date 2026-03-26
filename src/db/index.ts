@@ -59,16 +59,17 @@ if (enableDbSsl) {
   poolConfig.ssl = { rejectUnauthorized }
 }
 
-const pool =
-  globalForDb.__batwaraPool ??
-  new Pool(poolConfig)
+const existingPool = globalForDb.__batwaraPool
+const pool = existingPool ?? new Pool(poolConfig)
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.__batwaraPool = pool
 }
 
-pool.on("error", (error) => {
-  console.error("[Batwara DB] Unexpected idle client error", error)
-})
+if (!existingPool) {
+  pool.on("error", (error) => {
+    console.error("[Batwara DB] Unexpected idle client error", error)
+  })
+}
 
 export const db = drizzle(pool)

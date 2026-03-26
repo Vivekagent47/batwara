@@ -22,7 +22,7 @@ type ResetSearch = {
   error?: string
 }
 
-export const Route = createFileRoute("/(auth)/reset-password")({
+export const Route = createFileRoute("/(auth)/reset-password/")({
   validateSearch: (search: Record<string, unknown>): ResetSearch => ({
     state: search.state === "expired" ? "expired" : undefined,
     token: typeof search.token === "string" ? search.token : undefined,
@@ -61,25 +61,30 @@ function ResetPasswordPage() {
     }
 
     setIsPending(true)
+    try {
+      const { error } = await authClient.resetPassword({
+        newPassword: password,
+        token: search.token,
+      })
 
-    const { error } = await authClient.resetPassword({
-      newPassword: password,
-      token: search.token,
-    })
+      if (error) {
+        toast.error("Could not reset password", {
+          description: getAuthErrorMessage(error),
+        })
+        return
+      }
 
-    setIsPending(false)
-
-    if (error) {
+      toast.success("Password updated", {
+        description: "Your Batwara password has been changed. You can sign in now.",
+      })
+      await navigate({ to: "/login" })
+    } catch (error) {
       toast.error("Could not reset password", {
         description: getAuthErrorMessage(error),
       })
-      return
+    } finally {
+      setIsPending(false)
     }
-
-    toast.success("Password updated", {
-      description: "Your Batwara password has been changed. You can sign in now.",
-    })
-    await navigate({ to: "/login" })
   }
 
   return (

@@ -11,13 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as authVerifyEmailRouteImport } from './routes/(auth)/verify-email'
-import { Route as authResetPasswordRouteImport } from './routes/(auth)/reset-password'
-import { Route as authRegisterRouteImport } from './routes/(auth)/register'
-import { Route as authLoginRouteImport } from './routes/(auth)/login'
-import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
+import { Route as GroupsIndexRouteImport } from './routes/groups/index'
+import { Route as FriendsIndexRouteImport } from './routes/friends/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as ActivityIndexRouteImport } from './routes/activity/index'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as SettleNewRouteImport } from './routes/settle/new'
+import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
+import { Route as ExpenseNewRouteImport } from './routes/expense/new'
+import { Route as authVerifyEmailIndexRouteImport } from './routes/(auth)/verify-email/index'
+import { Route as authResetPasswordIndexRouteImport } from './routes/(auth)/reset-password/index'
+import { Route as authRegisterIndexRouteImport } from './routes/(auth)/register/index'
+import { Route as authLoginIndexRouteImport } from './routes/(auth)/login/index'
+import { Route as authForgotPasswordIndexRouteImport } from './routes/(auth)/forgot-password/index'
+import { Route as GroupsGroupIdSettingsRouteImport } from './routes/groups/$groupId/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -30,40 +38,80 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authVerifyEmailRoute = authVerifyEmailRouteImport.update({
-  id: '/(auth)/verify-email',
-  path: '/verify-email',
+const GroupsIndexRoute = GroupsIndexRouteImport.update({
+  id: '/groups/',
+  path: '/groups/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authResetPasswordRoute = authResetPasswordRouteImport.update({
-  id: '/(auth)/reset-password',
-  path: '/reset-password',
+const FriendsIndexRoute = FriendsIndexRouteImport.update({
+  id: '/friends/',
+  path: '/friends/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authRegisterRoute = authRegisterRouteImport.update({
-  id: '/(auth)/register',
-  path: '/register',
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authLoginRoute = authLoginRouteImport.update({
-  id: '/(auth)/login',
-  path: '/login',
+const ActivityIndexRoute = ActivityIndexRouteImport.update({
+  id: '/activity/',
+  path: '/activity/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
-  id: '/(auth)/forgot-password',
-  path: '/forgot-password',
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/account/',
+  path: '/account/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettleNewRoute = SettleNewRouteImport.update({
+  id: '/settle/new',
+  path: '/settle/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
+  id: '/groups/$groupId',
+  path: '/groups/$groupId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpenseNewRoute = ExpenseNewRouteImport.update({
+  id: '/expense/new',
+  path: '/expense/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authVerifyEmailIndexRoute = authVerifyEmailIndexRouteImport.update({
+  id: '/(auth)/verify-email/',
+  path: '/verify-email/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authResetPasswordIndexRoute = authResetPasswordIndexRouteImport.update({
+  id: '/(auth)/reset-password/',
+  path: '/reset-password/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authRegisterIndexRoute = authRegisterIndexRouteImport.update({
+  id: '/(auth)/register/',
+  path: '/register/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authLoginIndexRoute = authLoginIndexRouteImport.update({
+  id: '/(auth)/login/',
+  path: '/login/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authForgotPasswordIndexRoute = authForgotPasswordIndexRouteImport.update({
+  id: '/(auth)/forgot-password/',
+  path: '/forgot-password/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsGroupIdSettingsRoute = GroupsGroupIdSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => GroupsGroupIdRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -73,91 +121,146 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/forgot-password': typeof authForgotPasswordRoute
-  '/login': typeof authLoginRoute
-  '/register': typeof authRegisterRoute
-  '/reset-password': typeof authResetPasswordRoute
-  '/verify-email': typeof authVerifyEmailRoute
+  '/expense/new': typeof ExpenseNewRoute
+  '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
+  '/settle/new': typeof SettleNewRoute
+  '/account/': typeof AccountIndexRoute
+  '/activity/': typeof ActivityIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/friends/': typeof FriendsIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
+  '/forgot-password/': typeof authForgotPasswordIndexRoute
+  '/login/': typeof authLoginIndexRoute
+  '/register/': typeof authRegisterIndexRoute
+  '/reset-password/': typeof authResetPasswordIndexRoute
+  '/verify-email/': typeof authVerifyEmailIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/forgot-password': typeof authForgotPasswordRoute
-  '/login': typeof authLoginRoute
-  '/register': typeof authRegisterRoute
-  '/reset-password': typeof authResetPasswordRoute
-  '/verify-email': typeof authVerifyEmailRoute
+  '/expense/new': typeof ExpenseNewRoute
+  '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
+  '/settle/new': typeof SettleNewRoute
+  '/account': typeof AccountIndexRoute
+  '/activity': typeof ActivityIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/friends': typeof FriendsIndexRoute
+  '/groups': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
+  '/forgot-password': typeof authForgotPasswordIndexRoute
+  '/login': typeof authLoginIndexRoute
+  '/register': typeof authRegisterIndexRoute
+  '/reset-password': typeof authResetPasswordIndexRoute
+  '/verify-email': typeof authVerifyEmailIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/(auth)/forgot-password': typeof authForgotPasswordRoute
-  '/(auth)/login': typeof authLoginRoute
-  '/(auth)/register': typeof authRegisterRoute
-  '/(auth)/reset-password': typeof authResetPasswordRoute
-  '/(auth)/verify-email': typeof authVerifyEmailRoute
+  '/expense/new': typeof ExpenseNewRoute
+  '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
+  '/settle/new': typeof SettleNewRoute
+  '/account/': typeof AccountIndexRoute
+  '/activity/': typeof ActivityIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/friends/': typeof FriendsIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
+  '/(auth)/forgot-password/': typeof authForgotPasswordIndexRoute
+  '/(auth)/login/': typeof authLoginIndexRoute
+  '/(auth)/register/': typeof authRegisterIndexRoute
+  '/(auth)/reset-password/': typeof authResetPasswordIndexRoute
+  '/(auth)/verify-email/': typeof authVerifyEmailIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/forgot-password'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/verify-email'
+    | '/expense/new'
+    | '/groups/$groupId'
+    | '/settle/new'
+    | '/account/'
+    | '/activity/'
+    | '/dashboard/'
+    | '/friends/'
+    | '/groups/'
     | '/api/auth/$'
+    | '/groups/$groupId/settings'
+    | '/forgot-password/'
+    | '/login/'
+    | '/register/'
+    | '/reset-password/'
+    | '/verify-email/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/expense/new'
+    | '/groups/$groupId'
+    | '/settle/new'
+    | '/account'
+    | '/activity'
+    | '/dashboard'
+    | '/friends'
+    | '/groups'
+    | '/api/auth/$'
+    | '/groups/$groupId/settings'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
     | '/verify-email'
-    | '/api/auth/$'
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/(auth)/forgot-password'
-    | '/(auth)/login'
-    | '/(auth)/register'
-    | '/(auth)/reset-password'
-    | '/(auth)/verify-email'
+    | '/expense/new'
+    | '/groups/$groupId'
+    | '/settle/new'
+    | '/account/'
+    | '/activity/'
+    | '/dashboard/'
+    | '/friends/'
+    | '/groups/'
     | '/api/auth/$'
+    | '/groups/$groupId/settings'
+    | '/(auth)/forgot-password/'
+    | '/(auth)/login/'
+    | '/(auth)/register/'
+    | '/(auth)/reset-password/'
+    | '/(auth)/verify-email/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  authForgotPasswordRoute: typeof authForgotPasswordRoute
-  authLoginRoute: typeof authLoginRoute
-  authRegisterRoute: typeof authRegisterRoute
-  authResetPasswordRoute: typeof authResetPasswordRoute
-  authVerifyEmailRoute: typeof authVerifyEmailRoute
+  ExpenseNewRoute: typeof ExpenseNewRoute
+  GroupsGroupIdRoute: typeof GroupsGroupIdRouteWithChildren
+  SettleNewRoute: typeof SettleNewRoute
+  AccountIndexRoute: typeof AccountIndexRoute
+  ActivityIndexRoute: typeof ActivityIndexRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  FriendsIndexRoute: typeof FriendsIndexRoute
+  GroupsIndexRoute: typeof GroupsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  authForgotPasswordIndexRoute: typeof authForgotPasswordIndexRoute
+  authLoginIndexRoute: typeof authLoginIndexRoute
+  authRegisterIndexRoute: typeof authRegisterIndexRoute
+  authResetPasswordIndexRoute: typeof authResetPasswordIndexRoute
+  authVerifyEmailIndexRoute: typeof authVerifyEmailIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -176,13 +279,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -190,40 +286,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/verify-email': {
-      id: '/(auth)/verify-email'
+    '/groups/': {
+      id: '/groups/'
+      path: '/groups'
+      fullPath: '/groups/'
+      preLoaderRoute: typeof GroupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends/': {
+      id: '/friends/'
+      path: '/friends'
+      fullPath: '/friends/'
+      preLoaderRoute: typeof FriendsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity/': {
+      id: '/activity/'
+      path: '/activity'
+      fullPath: '/activity/'
+      preLoaderRoute: typeof ActivityIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/account'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settle/new': {
+      id: '/settle/new'
+      path: '/settle/new'
+      fullPath: '/settle/new'
+      preLoaderRoute: typeof SettleNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups/$groupId': {
+      id: '/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof GroupsGroupIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expense/new': {
+      id: '/expense/new'
+      path: '/expense/new'
+      fullPath: '/expense/new'
+      preLoaderRoute: typeof ExpenseNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/verify-email/': {
+      id: '/(auth)/verify-email/'
       path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof authVerifyEmailRouteImport
+      fullPath: '/verify-email/'
+      preLoaderRoute: typeof authVerifyEmailIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/reset-password': {
-      id: '/(auth)/reset-password'
+    '/(auth)/reset-password/': {
+      id: '/(auth)/reset-password/'
       path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof authResetPasswordRouteImport
+      fullPath: '/reset-password/'
+      preLoaderRoute: typeof authResetPasswordIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/register': {
-      id: '/(auth)/register'
+    '/(auth)/register/': {
+      id: '/(auth)/register/'
       path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof authRegisterRouteImport
+      fullPath: '/register/'
+      preLoaderRoute: typeof authRegisterIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/login': {
-      id: '/(auth)/login'
+    '/(auth)/login/': {
+      id: '/(auth)/login/'
       path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof authLoginRouteImport
+      fullPath: '/login/'
+      preLoaderRoute: typeof authLoginIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/forgot-password': {
-      id: '/(auth)/forgot-password'
+    '/(auth)/forgot-password/': {
+      id: '/(auth)/forgot-password/'
       path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof authForgotPasswordRouteImport
+      fullPath: '/forgot-password/'
+      preLoaderRoute: typeof authForgotPasswordIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/groups/$groupId/settings': {
+      id: '/groups/$groupId/settings'
+      path: '/settings'
+      fullPath: '/groups/$groupId/settings'
+      preLoaderRoute: typeof GroupsGroupIdSettingsRouteImport
+      parentRoute: typeof GroupsGroupIdRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -235,17 +394,36 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface GroupsGroupIdRouteChildren {
+  GroupsGroupIdSettingsRoute: typeof GroupsGroupIdSettingsRoute
+}
+
+const GroupsGroupIdRouteChildren: GroupsGroupIdRouteChildren = {
+  GroupsGroupIdSettingsRoute: GroupsGroupIdSettingsRoute,
+}
+
+const GroupsGroupIdRouteWithChildren = GroupsGroupIdRoute._addFileChildren(
+  GroupsGroupIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  authForgotPasswordRoute: authForgotPasswordRoute,
-  authLoginRoute: authLoginRoute,
-  authRegisterRoute: authRegisterRoute,
-  authResetPasswordRoute: authResetPasswordRoute,
-  authVerifyEmailRoute: authVerifyEmailRoute,
+  ExpenseNewRoute: ExpenseNewRoute,
+  GroupsGroupIdRoute: GroupsGroupIdRouteWithChildren,
+  SettleNewRoute: SettleNewRoute,
+  AccountIndexRoute: AccountIndexRoute,
+  ActivityIndexRoute: ActivityIndexRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+  FriendsIndexRoute: FriendsIndexRoute,
+  GroupsIndexRoute: GroupsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  authForgotPasswordIndexRoute: authForgotPasswordIndexRoute,
+  authLoginIndexRoute: authLoginIndexRoute,
+  authRegisterIndexRoute: authRegisterIndexRoute,
+  authResetPasswordIndexRoute: authResetPasswordIndexRoute,
+  authVerifyEmailIndexRoute: authVerifyEmailIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

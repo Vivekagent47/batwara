@@ -2,7 +2,6 @@ import { Suspense, lazy } from "react"
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
 
 import appCss from "../styles.css?url"
-import { InteractiveBackground } from "@/components/interactive-background"
 import { appEnv } from "@/lib/env"
 import { createAbsoluteUrl, siteConfig } from "@/lib/site-config"
 import { NotFoundPage } from "@/components/not-found"
@@ -57,6 +56,7 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: NotFoundPage,
+  errorComponent: RootErrorComponent,
   shellComponent: RootDocument,
 })
 
@@ -67,7 +67,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="relative min-h-svh overflow-x-hidden">
-        {appEnv.enableInteractiveBackground ? <InteractiveBackground /> : null}
         <div className="relative z-10">{children}</div>
         <Toaster position="top-right" richColors closeButton />
         {Devtools ? (
@@ -78,5 +77,38 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function RootErrorComponent({ error }: { error: unknown }) {
+  const message =
+    error instanceof Error ? error.message : "Unexpected application error."
+
+  return (
+    <main className="relative min-h-svh px-4 py-10 sm:px-6">
+      <div className="mx-auto w-full max-w-xl rounded-2xl border border-border bg-background/95 p-6 shadow-sm">
+        <h1 className="font-heading text-3xl leading-tight text-foreground">
+          Something went wrong
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          {message}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <a
+            href="/"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Go to home
+          </a>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted/50"
+          >
+            Reload page
+          </button>
+        </div>
+      </div>
+    </main>
   )
 }

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   ArrowRight01Icon,
@@ -17,7 +18,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { DeferredHeroScene } from "@/components/landing/deferred-hero-scene"
+import { HeroSceneFallback } from "@/components/landing/hero-scene-fallback"
 import {
   createFaqSchema,
   createOrganizationSchema,
@@ -159,6 +160,11 @@ const faqItems = [
 
 const socialImageUrl = createAbsoluteUrl(siteConfig.socialImagePath)
 const homeUrl = createAbsoluteUrl("/")
+const LazyDeferredHeroScene = lazy(() =>
+  import("@/components/landing/deferred-hero-scene").then((mod) => ({
+    default: mod.DeferredHeroScene,
+  }))
+)
 
 export const Route = createFileRoute("/")({
   ssr: true,
@@ -362,7 +368,9 @@ function LandingPage() {
             </div>
 
             <div className="absolute inset-0 rounded-[2rem] border border-white/60 bg-white/30 p-3 shadow-[0_24px_70px_rgba(26,107,60,0.14)]">
-              <DeferredHeroScene />
+              <Suspense fallback={<HeroSceneFallback />}>
+                <LazyDeferredHeroScene />
+              </Suspense>
             </div>
 
             <div className="animate-batwara-float absolute right-0 bottom-6 z-10 w-60 rounded-[1.75rem] border border-white/75 bg-[#f7f2e8]/88 p-4 shadow-[0_18px_42px_rgba(28,28,24,0.1)] backdrop-blur">

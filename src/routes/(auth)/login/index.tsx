@@ -24,7 +24,7 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
 }
 
-export const Route = createFileRoute("/(auth)/login")({
+export const Route = createFileRoute("/(auth)/login/")({
   head: () => createAuthPageHead("Log In", pageDescription),
   component: LoginPage,
 })
@@ -48,27 +48,33 @@ function LoginPage() {
     event.preventDefault()
     setIsPending(true)
 
-    const { data, error } = await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: "/dashboard",
-    })
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/dashboard",
+      })
 
-    setIsPending(false)
+      if (error) {
+        toast.error("Could not sign you in", {
+          description: getAuthErrorMessage(error),
+        })
+        return
+      }
 
-    if (error) {
+      if (data.url) {
+        await navigate({ to: "/dashboard" })
+        return
+      }
+
+      await navigate({ to: "/dashboard" })
+    } catch (error) {
       toast.error("Could not sign you in", {
         description: getAuthErrorMessage(error),
       })
-      return
+    } finally {
+      setIsPending(false)
     }
-
-    if (data.url) {
-      window.location.href = data.url
-      return
-    }
-
-    await navigate({ to: "/dashboard" })
   }
 
   const resendVerification = async () => {
@@ -88,26 +94,31 @@ function LoginPage() {
     }
 
     setIsResending(true)
-
-    const { error } = await authClient.sendVerificationEmail({
-      email,
-      callbackURL: verificationCallbackUrl,
-    })
-
-    setIsResending(false)
-
-    if (error) {
-      const message = getAuthErrorMessage(error)
-      toast.error("Could not send verification email", {
-        description: message,
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: verificationCallbackUrl,
       })
-      return
-    }
 
-    toast.success("Verification email sent", {
-      description:
-        "If that account exists, Batwara has logged the email details in the terminal in development.",
-    })
+      if (error) {
+        const message = getAuthErrorMessage(error)
+        toast.error("Could not send verification email", {
+          description: message,
+        })
+        return
+      }
+
+      toast.success("Verification email sent", {
+        description:
+          "If that account exists, Batwara has logged the email details in the terminal in development.",
+      })
+    } catch (error) {
+      toast.error("Could not send verification email", {
+        description: getAuthErrorMessage(error),
+      })
+    } finally {
+      setIsResending(false)
+    }
   }
 
   return (

@@ -16,7 +16,7 @@ import { authClient, getAuthErrorMessage } from "@/lib/auth-client"
 const pageDescription =
   "Request a password reset link for your Batwara account."
 
-export const Route = createFileRoute("/(auth)/forgot-password")({
+export const Route = createFileRoute("/(auth)/forgot-password/")({
   head: () => createAuthPageHead("Forgot Password", pageDescription),
   component: ForgotPasswordPage,
 })
@@ -28,24 +28,29 @@ function ForgotPasswordPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsPending(true)
+    try {
+      const { error } = await authClient.requestPasswordReset({
+        email,
+        redirectTo: "/reset-password",
+      })
 
-    const { error } = await authClient.requestPasswordReset({
-      email,
-      redirectTo: "/reset-password",
-    })
+      if (error) {
+        toast.error("Could not send reset link", {
+          description: getAuthErrorMessage(error),
+        })
+        return
+      }
 
-    setIsPending(false)
-
-    if (error) {
+      toast.success("Reset link sent", {
+        description: `If ${email} belongs to a Batwara account, a reset link is on the way.`,
+      })
+    } catch (error) {
       toast.error("Could not send reset link", {
         description: getAuthErrorMessage(error),
       })
-      return
+    } finally {
+      setIsPending(false)
     }
-
-    toast.success("Reset link sent", {
-      description: `If ${email} belongs to a Batwara account, a reset link is on the way.`,
-    })
   }
 
   return (

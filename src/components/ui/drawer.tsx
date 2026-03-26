@@ -6,9 +6,34 @@ import { Drawer as DrawerPrimitive } from "vaul"
 import { cn } from "@/lib/utils"
 
 function Drawer({
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  const handleOpenChange = React.useCallback<
+    NonNullable<
+      React.ComponentProps<typeof DrawerPrimitive.Root>["onOpenChange"]
+    >
+  >(
+    (open) => {
+      if (open) {
+        const active = document.activeElement
+        if (active instanceof HTMLElement) {
+          active.blur()
+        }
+      }
+
+      onOpenChange?.(open)
+    },
+    [onOpenChange]
+  )
+
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  )
 }
 
 function DrawerTrigger({
