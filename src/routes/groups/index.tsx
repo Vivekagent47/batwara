@@ -379,14 +379,14 @@ function GroupsPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-xl sm:min-w-[104px]"
+              className="h-11 rounded-xl sm:min-w-26"
               onClick={() => setCreateOpen(false)}
             >
               Cancel
             </Button>
             <Button
               type="button"
-              className="h-11 rounded-xl sm:min-w-[144px]"
+              className="h-11 rounded-xl sm:min-w-36"
               disabled={isPending}
               onClick={onCreateGroup}
             >
@@ -454,7 +454,7 @@ function GroupsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 rounded-xl px-4 sm:min-w-[92px]"
+                  className="h-11 rounded-xl px-4 sm:min-w-23"
                   disabled={!friendCandidateId}
                   onClick={onAddFriend}
                 >
@@ -484,7 +484,7 @@ function GroupsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 rounded-xl px-4 sm:min-w-[92px]"
+                  className="h-11 rounded-xl px-4 sm:min-w-23"
                   disabled={isLookupPending}
                   onClick={() => void onLookupByEmail()}
                 >

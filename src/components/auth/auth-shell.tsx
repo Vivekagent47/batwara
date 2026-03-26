@@ -93,7 +93,7 @@ export function AuthShell({
     <main className="relative isolate min-h-svh overflow-hidden px-5 py-6 sm:px-8 lg:px-10">
       <div className="paper-grid absolute inset-0 opacity-[0.12]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(26,107,60,0.09),transparent_58%)]" />
-      <div className="pointer-events-none absolute right-[-10rem] bottom-[-12rem] h-[26rem] w-[26rem] rounded-full bg-[radial-gradient(circle,rgba(204,184,150,0.24),transparent_65%)]" />
+      <div className="pointer-events-none absolute -right-40 -bottom-48 h-104 w-104 rounded-full bg-[radial-gradient(circle,rgba(204,184,150,0.24),transparent_65%)]" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-6xl items-center">
         <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,34rem)_minmax(18rem,24rem)]">
