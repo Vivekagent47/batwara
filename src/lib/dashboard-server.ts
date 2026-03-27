@@ -18,7 +18,10 @@ import {
 } from "@/db/schema"
 import { auth } from "@/lib/auth"
 import { getServerAuthSession } from "@/lib/auth-session"
-import { settlementsDisabledMessage, settlementsEnabled } from "@/lib/feature-flags"
+import {
+  settlementsDisabledMessage,
+  settlementsEnabled,
+} from "@/lib/feature-flags-server"
 import { enforceRateLimit } from "@/lib/rate-limit"
 
 export type LedgerContextType = "group" | "friend"
@@ -565,28 +568,6 @@ async function assertGroupAccess(userId: string, groupId: string) {
   }
 }
 
-async function assertFriendAccess(userId: string, friendLinkId: string) {
-  const entry = await db
-    .select({
-      id: friendLink.id,
-      userAId: friendLink.userAId,
-      userBId: friendLink.userBId,
-      status: friendLink.status,
-    })
-    .from(friendLink)
-    .where(eq(friendLink.id, friendLinkId))
-    .limit(1)
-
-  const link = entry.at(0)
-  if (!link || link.status !== "active") {
-    throw new Error("Friend ledger is unavailable.")
-  }
-
-  if (link.userAId !== userId && link.userBId !== userId) {
-    throw new Error("You are not part of this friend ledger.")
-  }
-}
-
 async function getGroupMembers(groupId: string) {
   const rows = await db
     .select({
@@ -602,25 +583,37 @@ async function getGroupMembers(groupId: string) {
   return rows as Array<ContextMember>
 }
 
-async function getFriendMembers(friendLinkId: string) {
-  const rows = await db
+async function getFriendContextForUser(userId: string, friendLinkId: string) {
+  const linkRows = await db
     .select({
+      id: friendLink.id,
       userAId: friendLink.userAId,
       userBId: friendLink.userBId,
+      status: friendLink.status,
     })
     .from(friendLink)
     .where(eq(friendLink.id, friendLinkId))
     .limit(1)
 
-  const link = rows.at(0)
-  if (!link) {
-    return [] as Array<ContextMember>
+  const link = linkRows.at(0)
+  if (!link || link.status !== "active") {
+    throw new Error("Friend ledger is unavailable.")
+  }
+
+  if (link.userAId !== userId && link.userBId !== userId) {
+    throw new Error("You are not part of this friend ledger.")
   }
 
   const userLookup = await getUserLookup([link.userAId, link.userBId])
-  return [link.userAId, link.userBId]
+  const members = [link.userAId, link.userBId]
     .map((id) => userLookup.get(id))
     .filter((entry): entry is LedgerUser => Boolean(entry))
+
+  return {
+    link,
+    members,
+    counterpartId: link.userAId === userId ? link.userBId : link.userAId,
+  }
 }
 
 async function getExpenseContextForUser(userId: string, expenseId: string) {
@@ -653,14 +646,17 @@ async function getExpenseContextForUser(userId: string, expenseId: string) {
 
   if (expenseRow.organizationId) {
     await assertGroupAccess(userId, expenseRow.organizationId)
-    const groupRows = await db
-      .select({
-        id: organization.id,
-        name: organization.name,
-      })
-      .from(organization)
-      .where(eq(organization.id, expenseRow.organizationId))
-      .limit(1)
+    const [groupRows, members] = await Promise.all([
+      db
+        .select({
+          id: organization.id,
+          name: organization.name,
+        })
+        .from(organization)
+        .where(eq(organization.id, expenseRow.organizationId))
+        .limit(1),
+      getGroupMembers(expenseRow.organizationId),
+    ])
 
     const group = groupRows.at(0)
     if (!group) {
@@ -672,14 +668,15 @@ async function getExpenseContextForUser(userId: string, expenseId: string) {
       contextType: "group" as const,
       contextId: group.id,
       contextName: group.name,
-      members: await getGroupMembers(group.id),
+      members,
     }
   }
 
   if (expenseRow.friendLinkId) {
-    await assertFriendAccess(userId, expenseRow.friendLinkId)
-    const members = await getFriendMembers(expenseRow.friendLinkId)
-
+    const { members } = await getFriendContextForUser(
+      userId,
+      expenseRow.friendLinkId
+    )
     const counterpart = members.find((entry) => entry.id !== userId)
 
     return {
@@ -1131,31 +1128,32 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
       max: 150,
     })
 
-    const membershipRows = await db
-      .select({ role: member.role })
-      .from(member)
-      .where(
-        and(
-          eq(member.organizationId, data.groupId),
-          eq(member.userId, currentUser.id)
+    const [membershipRows, groupRows] = await Promise.all([
+      db
+        .select({ role: member.role })
+        .from(member)
+        .where(
+          and(
+            eq(member.organizationId, data.groupId),
+            eq(member.userId, currentUser.id)
+          )
         )
-      )
-      .limit(1)
+        .limit(1),
+      db
+        .select({
+          id: organization.id,
+          name: organization.name,
+          slug: organization.slug,
+        })
+        .from(organization)
+        .where(eq(organization.id, data.groupId))
+        .limit(1),
+    ])
 
     const membership = membershipRows.at(0)
     if (!membership) {
       throw new Error("You are not a member of this group.")
     }
-
-    const groupRows = await db
-      .select({
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-      })
-      .from(organization)
-      .where(eq(organization.id, data.groupId))
-      .limit(1)
 
     const group = groupRows.at(0)
     if (!group) {
@@ -1341,31 +1339,32 @@ export const getGroupSettingsData = createServerFn({ method: "GET" })
       max: 120,
     })
 
-    const membershipRows = await db
-      .select({ role: member.role })
-      .from(member)
-      .where(
-        and(
-          eq(member.organizationId, data.groupId),
-          eq(member.userId, currentUser.id)
+    const [membershipRows, groupRows] = await Promise.all([
+      db
+        .select({ role: member.role })
+        .from(member)
+        .where(
+          and(
+            eq(member.organizationId, data.groupId),
+            eq(member.userId, currentUser.id)
+          )
         )
-      )
-      .limit(1)
+        .limit(1),
+      db
+        .select({
+          id: organization.id,
+          name: organization.name,
+          slug: organization.slug,
+        })
+        .from(organization)
+        .where(eq(organization.id, data.groupId))
+        .limit(1),
+    ])
 
     const membership = membershipRows.at(0)
     if (!membership) {
       throw new Error("You are not a member of this group.")
     }
-
-    const groupRows = await db
-      .select({
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-      })
-      .from(organization)
-      .where(eq(organization.id, data.groupId))
-      .limit(1)
 
     const group = groupRows.at(0)
     if (!group) {
@@ -1418,11 +1417,23 @@ export const leaveGroup = createServerFn({ method: "POST" })
       throw new Error("Group id is required.")
     }
 
-    const membershipRows = await db
-      .select({ role: member.role })
-      .from(member)
-      .where(and(eq(member.organizationId, groupId), eq(member.userId, currentUser.id)))
-      .limit(1)
+    const [membershipRows, groupRows] = await Promise.all([
+      db
+        .select({ role: member.role })
+        .from(member)
+        .where(
+          and(eq(member.organizationId, groupId), eq(member.userId, currentUser.id))
+        )
+        .limit(1),
+      db
+        .select({
+          id: organization.id,
+          name: organization.name,
+        })
+        .from(organization)
+        .where(eq(organization.id, groupId))
+        .limit(1),
+    ])
 
     const membership = membershipRows.at(0)
     if (!membership) {
@@ -1432,15 +1443,6 @@ export const leaveGroup = createServerFn({ method: "POST" })
     if (parseMemberRoles(membership.role).includes("owner")) {
       throw new Error("Group owners cannot leave the group.")
     }
-
-    const groupRows = await db
-      .select({
-        id: organization.id,
-        name: organization.name,
-      })
-      .from(organization)
-      .where(eq(organization.id, groupId))
-      .limit(1)
 
     const group = groupRows.at(0)
     if (!group) {
@@ -1528,17 +1530,18 @@ export const getFriendDetailsData = createServerFn({ method: "GET" })
       throw new Error("Friend id is required.")
     }
 
-    await assertFriendAccess(currentUser.id, friendId)
-
-    const members = await getFriendMembers(friendId)
-    const counterpart = members.find((entry) => entry.id !== currentUser.id)
+    const { members, counterpartId } = await getFriendContextForUser(
+      currentUser.id,
+      friendId
+    )
+    const counterpart = members.find((entry) => entry.id === counterpartId)
     if (!counterpart) {
       throw new Error("Friend ledger is unavailable.")
     }
 
     const sharedGroupIds = await getSharedGroupIdsBetweenUsers(
       currentUser.id,
-      counterpart.id
+      counterpartId
     )
 
     const offset = Math.max(0, Math.floor(data.offset ?? 0))
@@ -1797,9 +1800,9 @@ export const getLedgerMembers = createServerFn({ method: "GET" })
       }
     }
 
-    await assertFriendAccess(currentUser.id, contextId)
+    const { members } = await getFriendContextForUser(currentUser.id, contextId)
     return {
-      members: await getFriendMembers(contextId),
+      members,
     }
   })
 
@@ -2163,16 +2166,13 @@ export const createExpense = createServerFn({ method: "POST" })
       throw new Error("Expense amount must be more than zero.")
     }
 
+    let members: Array<ContextMember>
     if (contextType === "group") {
       await assertGroupAccess(currentUser.id, contextId)
+      members = await getGroupMembers(contextId)
     } else {
-      await assertFriendAccess(currentUser.id, contextId)
+      members = (await getFriendContextForUser(currentUser.id, contextId)).members
     }
-
-    const members =
-      contextType === "group"
-        ? await getGroupMembers(contextId)
-        : await getFriendMembers(contextId)
     const memberIds = new Set(members.map((entry) => entry.id))
 
     if (!memberIds.has(data.paidByUserId)) {
@@ -2467,20 +2467,19 @@ export const createSettlement = createServerFn({ method: "POST" })
       max: 35,
     })
 
-    if (data.contextType === "group") {
-      await assertGroupAccess(currentUser.id, data.contextId)
-    } else {
-      await assertFriendAccess(currentUser.id, data.contextId)
-    }
-
     if (data.payerUserId === data.payeeUserId) {
       throw new Error("Payer and payee must be different.")
     }
 
-    const members =
-      data.contextType === "group"
-        ? await getGroupMembers(data.contextId)
-        : await getFriendMembers(data.contextId)
+    let members: Array<ContextMember>
+    if (data.contextType === "group") {
+      await assertGroupAccess(currentUser.id, data.contextId)
+      members = await getGroupMembers(data.contextId)
+    } else {
+      members = (
+        await getFriendContextForUser(currentUser.id, data.contextId)
+      ).members
+    }
     const memberIds = new Set(members.map((entry) => entry.id))
 
     if (!memberIds.has(data.payerUserId) || !memberIds.has(data.payeeUserId)) {

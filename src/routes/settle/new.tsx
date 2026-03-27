@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
-import { settlementsDisabledMessage } from "@/lib/feature-flags"
+import { settlementsDisabledMessage } from "@/lib/feature-flags-shared"
 
 export const Route = createFileRoute("/settle/new")({
   head: () => ({

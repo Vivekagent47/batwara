@@ -1,12 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource/fraunces/300.css";
-@import "@fontsource/fraunces/600.css";
-@import "@fontsource/dm-sans/400.css";
-@import "@fontsource/dm-sans/500.css";
-@import "@fontsource/dm-sans/600.css";
-@import "@fontsource/dm-mono/500.css";
+@import "@fontsource/fraunces/latin-300.css";
+@import "@fontsource/fraunces/latin-600.css";
+@import "@fontsource/dm-sans/latin-400.css";
+@import "@fontsource/dm-sans/latin-500.css";
+@import "@fontsource/dm-sans/latin-600.css";
+@import "@fontsource/dm-mono/latin-500.css";
 
 @custom-variant dark (&:is(.dark *));
 

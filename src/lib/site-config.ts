@@ -1,5 +1,7 @@
 import { appEnv } from "@/lib/env"
 
+const FALLBACK_SITE_URL = "http://localhost:3000"
+
 export const siteConfig = {
   name: "Batwara",
   title: "Batwara",
@@ -7,7 +9,7 @@ export const siteConfig = {
     "Batwara is an open-source expense splitting app for trips, roommates, couples, and shared life. Track group expenses, split bills, and settle balances with fewer payments.",
   appType:
     "Open-source expense splitting app, shared expense tracker, and split bills app for groups.",
-  defaultUrl: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  defaultUrl: appEnv.appUrl || FALLBACK_SITE_URL,
   socialImagePath: "/og-image.svg",
   manifestPath: "/manifest.json",
   keywords: [
@@ -23,7 +25,7 @@ export const siteConfig = {
 } as const
 
 export function getSiteUrl() {
-  return appEnv.appUrl || process.env.BETTER_AUTH_URL || siteConfig.defaultUrl
+  return appEnv.appUrl || siteConfig.defaultUrl
 }
 
 export function createAbsoluteUrl(path = "/") {

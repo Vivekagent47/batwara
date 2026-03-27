@@ -167,23 +167,32 @@ function GroupSettingsPage() {
 
     setIsAddingFriend(true)
     try {
-      let successCount = 0
-      const failedNames: Array<string> = []
+      const inviteResults = await Promise.all(
+        candidates.map(async (candidate) => {
+          try {
+            const { error } = await authClient.organization.inviteMember({
+              organizationId: data.group.id,
+              email: candidate.email,
+              role: "member",
+            })
 
-      for (const candidate of candidates) {
-        const { error } = await authClient.organization.inviteMember({
-          organizationId: data.group.id,
-          email: candidate.email,
-          role: "member",
+            return {
+              candidate,
+              succeeded: !error,
+            }
+          } catch {
+            return {
+              candidate,
+              succeeded: false,
+            }
+          }
         })
+      )
 
-        if (error) {
-          failedNames.push(candidate.name)
-          continue
-        }
-
-        successCount += 1
-      }
+      const successCount = inviteResults.filter((entry) => entry.succeeded).length
+      const failedNames = inviteResults
+        .filter((entry) => !entry.succeeded)
+        .map((entry) => entry.candidate.name)
 
       invalidateOrganizationPeopleCache(data.group.id)
       const nextInvitations = await listOrganizationInvitations(data.group.id, {
