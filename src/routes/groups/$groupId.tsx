@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
-import { formatMoneyMinor, formatRelativeDate } from "@/lib/dashboard-format"
+import { formatMoneyMinor, getBalanceToneByDirection } from "@/lib/dashboard-format"
 import {
   getGroupDetailsData,
   getGroupExpensesPage,
@@ -226,17 +226,26 @@ function GroupDetailsPage() {
                       {entry.title}
                     </p>
                     <p className="truncate text-[11px] text-muted-foreground">
-                      {entry.paidByName} paid ·{" "}
-                      {formatRelativeDate(new Date(entry.incurredAt))}
+                      {entry.paidByName} paid
                     </p>
                   </div>
                   <div className="text-right leading-tight">
-                    <p className="text-sm font-medium">
-                      {formatMoneyMinor(entry.totalAmountMinor)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground uppercase">
-                      {entry.splitMethod}
-                    </p>
+                    {entry.expenseImpact ? (
+                      <div className="text-right leading-tight">
+                        <p className="text-[10px] text-muted-foreground uppercase">
+                          {entry.expenseImpact.direction === "pay"
+                            ? "You owe"
+                            : "You get"}
+                        </p>
+                        <p
+                          className={`mt-0.5 text-sm font-medium ${getBalanceToneByDirection(entry.expenseImpact.direction)}`}
+                        >
+                          {formatMoneyMinor(entry.expenseImpact.amountMinor)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Balanced</p>
+                    )}
                   </div>
                 </Link>
               )

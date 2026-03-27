@@ -19,6 +19,7 @@ import { Route as ActivityIndexRouteImport } from './routes/activity/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as SettleNewRouteImport } from './routes/settle/new'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
+import { Route as FriendsFriendIdRouteImport } from './routes/friends/$friendId'
 import { Route as ExpenseNewRouteImport } from './routes/expense/new'
 import { Route as ExpenseExpenseIdRouteImport } from './routes/expense/$expenseId'
 import { Route as authVerifyEmailIndexRouteImport } from './routes/(auth)/verify-email/index'
@@ -80,6 +81,11 @@ const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
   path: '/groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FriendsFriendIdRoute = FriendsFriendIdRouteImport.update({
+  id: '/friends/$friendId',
+  path: '/friends/$friendId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExpenseNewRoute = ExpenseNewRouteImport.update({
   id: '/expense/new',
   path: '/expense/new',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/expense/$expenseId': typeof ExpenseExpenseIdRouteWithChildren
   '/expense/new': typeof ExpenseNewRoute
+  '/friends/$friendId': typeof FriendsFriendIdRoute
   '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
   '/settle/new': typeof SettleNewRoute
   '/account/': typeof AccountIndexRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/expense/$expenseId': typeof ExpenseExpenseIdRouteWithChildren
   '/expense/new': typeof ExpenseNewRoute
+  '/friends/$friendId': typeof FriendsFriendIdRoute
   '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
   '/settle/new': typeof SettleNewRoute
   '/account': typeof AccountIndexRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/expense/$expenseId': typeof ExpenseExpenseIdRouteWithChildren
   '/expense/new': typeof ExpenseNewRoute
+  '/friends/$friendId': typeof FriendsFriendIdRoute
   '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
   '/settle/new': typeof SettleNewRoute
   '/account/': typeof AccountIndexRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/expense/$expenseId'
     | '/expense/new'
+    | '/friends/$friendId'
     | '/groups/$groupId'
     | '/settle/new'
     | '/account/'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/expense/$expenseId'
     | '/expense/new'
+    | '/friends/$friendId'
     | '/groups/$groupId'
     | '/settle/new'
     | '/account'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/expense/$expenseId'
     | '/expense/new'
+    | '/friends/$friendId'
     | '/groups/$groupId'
     | '/settle/new'
     | '/account/'
@@ -273,6 +285,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ExpenseExpenseIdRoute: typeof ExpenseExpenseIdRouteWithChildren
   ExpenseNewRoute: typeof ExpenseNewRoute
+  FriendsFriendIdRoute: typeof FriendsFriendIdRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRouteWithChildren
   SettleNewRoute: typeof SettleNewRoute
   AccountIndexRoute: typeof AccountIndexRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/groups/$groupId'
       fullPath: '/groups/$groupId'
       preLoaderRoute: typeof GroupsGroupIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends/$friendId': {
+      id: '/friends/$friendId'
+      path: '/friends/$friendId'
+      fullPath: '/friends/$friendId'
+      preLoaderRoute: typeof FriendsFriendIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/expense/new': {
@@ -462,6 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ExpenseExpenseIdRoute: ExpenseExpenseIdRouteWithChildren,
   ExpenseNewRoute: ExpenseNewRoute,
+  FriendsFriendIdRoute: FriendsFriendIdRoute,
   GroupsGroupIdRoute: GroupsGroupIdRouteWithChildren,
   SettleNewRoute: SettleNewRoute,
   AccountIndexRoute: AccountIndexRoute,

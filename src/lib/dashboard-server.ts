@@ -79,6 +79,23 @@ type FriendInfo = {
   status: string
 }
 
+type FriendPairExpenseItem = {
+  id: string
+  title: string
+  totalAmountMinor: number
+  incurredAt: Date
+  paidByUserId: string
+  paidByName: string
+  organizationId: string | null
+  organizationName: string | null
+  contextType: "group" | "direct"
+  contextName: string
+  pairImpact: {
+    direction: "pay" | "collect"
+    amountMinor: number
+  }
+}
+
 type ContextMember = {
   id: string
   name: string
@@ -88,6 +105,7 @@ type ContextMember = {
 type UserLookup = Map<string, LedgerUser>
 
 const GROUP_EXPENSE_PAGE_SIZE = 15
+const FRIEND_EXPENSE_PAGE_SIZE = 20
 
 function safeDate(value: Date | null | undefined) {
   return value ?? new Date()
@@ -508,6 +526,33 @@ async function getUserFriends(userId: string) {
   })
 }
 
+async function getSharedGroupIdsBetweenUsers(userAId: string, userBId: string) {
+  const userAGroupRows = await db
+    .select({ organizationId: member.organizationId })
+    .from(member)
+    .where(eq(member.userId, userAId))
+
+  const userAGroupIds = Array.from(
+    new Set(userAGroupRows.map((entry) => entry.organizationId))
+  )
+
+  if (userAGroupIds.length === 0) {
+    return [] as Array<string>
+  }
+
+  const sharedGroupRows = await db
+    .select({ organizationId: member.organizationId })
+    .from(member)
+    .where(
+      and(
+        eq(member.userId, userBId),
+        inArray(member.organizationId, userAGroupIds)
+      )
+    )
+
+  return Array.from(new Set(sharedGroupRows.map((entry) => entry.organizationId)))
+}
+
 async function assertGroupAccess(userId: string, groupId: string) {
   const membership = await db
     .select({ organizationId: member.organizationId })
@@ -760,6 +805,54 @@ async function attachExpenseActivityImpacts(
         }
       : entry
   )
+}
+
+async function getExpenseImpactLookup(
+  userId: string,
+  expenseIds: Array<string>
+) {
+  const impactMap = new Map<
+    string,
+    {
+      direction: "pay" | "collect"
+      amountMinor: number
+    }
+  >()
+
+  if (expenseIds.length === 0) {
+    return impactMap
+  }
+
+  const rows = await db
+    .select({
+      expenseId: expenseParticipant.expenseId,
+      paidAmountMinor: expenseParticipant.paidAmountMinor,
+      owedAmountMinor: expenseParticipant.owedAmountMinor,
+    })
+    .from(expenseParticipant)
+    .where(
+      and(
+        eq(expenseParticipant.userId, userId),
+        inArray(expenseParticipant.expenseId, expenseIds)
+      )
+    )
+
+  for (const row of rows) {
+    const netMinor = row.paidAmountMinor - row.owedAmountMinor
+    if (netMinor > 0) {
+      impactMap.set(row.expenseId, {
+        direction: "collect",
+        amountMinor: netMinor,
+      })
+    } else if (netMinor < 0) {
+      impactMap.set(row.expenseId, {
+        direction: "pay",
+        amountMinor: Math.abs(netMinor),
+      })
+    }
+  }
+
+  return impactMap
 }
 
 async function getPairwiseSummary(
@@ -1140,12 +1233,19 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
 
     const hasMoreRecentExpenses =
       recentExpenseRows.length > GROUP_EXPENSE_PAGE_SIZE
-    const recentExpenses = recentExpenseRows
-      .slice(0, GROUP_EXPENSE_PAGE_SIZE)
-      .map((entry) => ({
-        ...entry,
-        incurredAt: safeDate(entry.incurredAt),
-      }))
+    const visibleRecentExpenseRows = recentExpenseRows.slice(
+      0,
+      GROUP_EXPENSE_PAGE_SIZE
+    )
+    const recentExpenseImpactMap = await getExpenseImpactLookup(
+      currentUser.id,
+      visibleRecentExpenseRows.map((entry) => entry.id)
+    )
+    const recentExpenses = visibleRecentExpenseRows.map((entry) => ({
+      ...entry,
+      incurredAt: safeDate(entry.incurredAt),
+      expenseImpact: recentExpenseImpactMap.get(entry.id) ?? null,
+    }))
 
     return {
       group,
@@ -1215,11 +1315,17 @@ export const getGroupExpensesPage = createServerFn({ method: "GET" })
       .offset(offset)
 
     const hasMore = rows.length > requestedLimit
+    const visibleRows = rows.slice(0, requestedLimit)
+    const expenseImpactMap = await getExpenseImpactLookup(
+      currentUser.id,
+      visibleRows.map((entry) => entry.id)
+    )
 
     return {
-      expenses: rows.slice(0, requestedLimit).map((entry) => ({
+      expenses: visibleRows.map((entry) => ({
         ...entry,
         incurredAt: safeDate(entry.incurredAt),
+        expenseImpact: expenseImpactMap.get(entry.id) ?? null,
       })),
       hasMore,
     }
@@ -1375,9 +1481,16 @@ export const getFriendsPageData = createServerFn({ method: "GET" }).handler(
       max: 100,
     })
 
-    const friends = await getUserFriends(currentUser.id)
+    const [groups, friends] = await Promise.all([
+      getUserGroups(currentUser.id),
+      getUserFriends(currentUser.id),
+    ])
     const friendIds = friends.map((entry) => entry.id)
-    const summary = await getPairwiseSummary(currentUser.id, [], friendIds)
+    const summary = await getPairwiseSummary(
+      currentUser.id,
+      groups.map((entry) => entry.id),
+      friendIds
+    )
 
     const suggestionMap = new Map(
       summary.suggestions.map((entry) => [entry.counterparty.id, entry])
@@ -1397,6 +1510,191 @@ export const getFriendsPageData = createServerFn({ method: "GET" }).handler(
     }
   }
 )
+
+export const getFriendDetailsData = createServerFn({ method: "GET" })
+  .inputValidator(
+    (input: { friendId: string; offset?: number; limit?: number }) => input
+  )
+  .handler(async ({ data }) => {
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `friend-details:${currentUser.id}:${data.friendId}`,
+      windowMs: 60_000,
+      max: 240,
+    })
+
+    const friendId = data.friendId.trim()
+    if (!friendId) {
+      throw new Error("Friend id is required.")
+    }
+
+    await assertFriendAccess(currentUser.id, friendId)
+
+    const members = await getFriendMembers(friendId)
+    const counterpart = members.find((entry) => entry.id !== currentUser.id)
+    if (!counterpart) {
+      throw new Error("Friend ledger is unavailable.")
+    }
+
+    const sharedGroupIds = await getSharedGroupIdsBetweenUsers(
+      currentUser.id,
+      counterpart.id
+    )
+
+    const offset = Math.max(0, Math.floor(data.offset ?? 0))
+    const requestedLimit = Math.max(
+      1,
+      Math.min(data.limit ?? FRIEND_EXPENSE_PAGE_SIZE, 40)
+    )
+
+    const scopeClauses = [eq(expense.friendLinkId, friendId)]
+    if (sharedGroupIds.length > 0) {
+      scopeClauses.push(inArray(expense.organizationId, sharedGroupIds))
+    }
+
+    const counterpartOwedExpenseIds = db
+      .select({ expenseId: expenseParticipant.expenseId })
+      .from(expenseParticipant)
+      .where(
+        and(
+          eq(expenseParticipant.userId, counterpart.id),
+          gt(expenseParticipant.owedAmountMinor, 0)
+        )
+      )
+
+    const currentUserOwedExpenseIds = db
+      .select({ expenseId: expenseParticipant.expenseId })
+      .from(expenseParticipant)
+      .where(
+        and(
+          eq(expenseParticipant.userId, currentUser.id),
+          gt(expenseParticipant.owedAmountMinor, 0)
+        )
+      )
+
+    const rows = await db
+      .select({
+        id: expense.id,
+        title: expense.title,
+        totalAmountMinor: expense.totalAmountMinor,
+        incurredAt: expense.incurredAt,
+        paidByUserId: expense.paidByUserId,
+        paidByName: user.name,
+        organizationId: expense.organizationId,
+        organizationName: organization.name,
+      })
+      .from(expense)
+      .innerJoin(user, eq(expense.paidByUserId, user.id))
+      .leftJoin(organization, eq(expense.organizationId, organization.id))
+      .where(
+        and(
+          scopeClauses.length === 1 ? scopeClauses[0] : or(...scopeClauses),
+          or(
+            and(
+              eq(expense.paidByUserId, currentUser.id),
+              inArray(expense.id, counterpartOwedExpenseIds)
+            ),
+            and(
+              eq(expense.paidByUserId, counterpart.id),
+              inArray(expense.id, currentUserOwedExpenseIds)
+            )
+          )
+        )
+      )
+      .orderBy(desc(expense.incurredAt), desc(expense.id))
+      .limit(requestedLimit + 1)
+      .offset(offset)
+
+    const hasMore = rows.length > requestedLimit
+    const visibleRows = rows.slice(0, requestedLimit)
+    const expenseIds = visibleRows.map((entry) => entry.id)
+
+    const participantRows =
+      expenseIds.length === 0
+        ? []
+        : await db
+            .select({
+              expenseId: expenseParticipant.expenseId,
+              userId: expenseParticipant.userId,
+              owedAmountMinor: expenseParticipant.owedAmountMinor,
+            })
+            .from(expenseParticipant)
+            .where(
+              and(
+                inArray(expenseParticipant.expenseId, expenseIds),
+                inArray(expenseParticipant.userId, [
+                  currentUser.id,
+                  counterpart.id,
+                ])
+              )
+            )
+
+    const owedByExpenseMap = new Map<
+      string,
+      {
+        currentUserOwedMinor: number
+        counterpartOwedMinor: number
+      }
+    >()
+
+    for (const row of participantRows) {
+      const current = owedByExpenseMap.get(row.expenseId) ?? {
+        currentUserOwedMinor: 0,
+        counterpartOwedMinor: 0,
+      }
+
+      if (row.userId === currentUser.id) {
+        current.currentUserOwedMinor = row.owedAmountMinor
+      } else if (row.userId === counterpart.id) {
+        current.counterpartOwedMinor = row.owedAmountMinor
+      }
+
+      owedByExpenseMap.set(row.expenseId, current)
+    }
+
+    const expenses: Array<FriendPairExpenseItem> = []
+
+    for (const entry of visibleRows) {
+      const owed = owedByExpenseMap.get(entry.id) ?? {
+        currentUserOwedMinor: 0,
+        counterpartOwedMinor: 0,
+      }
+
+      if (entry.paidByUserId === currentUser.id && owed.counterpartOwedMinor > 0) {
+        expenses.push({
+          ...entry,
+          incurredAt: safeDate(entry.incurredAt),
+          contextType: entry.organizationId ? "group" : "direct",
+          contextName: entry.organizationId ? (entry.organizationName ?? "Group") : "Direct",
+          pairImpact: {
+            direction: "collect",
+            amountMinor: owed.counterpartOwedMinor,
+          },
+        })
+        continue
+      }
+
+      if (entry.paidByUserId === counterpart.id && owed.currentUserOwedMinor > 0) {
+        expenses.push({
+          ...entry,
+          incurredAt: safeDate(entry.incurredAt),
+          contextType: entry.organizationId ? "group" : "direct",
+          contextName: entry.organizationId ? (entry.organizationName ?? "Group") : "Direct",
+          pairImpact: {
+            direction: "pay",
+            amountMinor: owed.currentUserOwedMinor,
+          },
+        })
+      }
+    }
+
+    return {
+      user: currentUser,
+      friend: counterpart,
+      expenses,
+      hasMore,
+    }
+  })
 
 export const getActivityPageData = createServerFn({ method: "GET" }).handler(
   async () => {
