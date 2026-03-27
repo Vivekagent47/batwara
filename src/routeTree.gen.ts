@@ -20,12 +20,14 @@ import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as SettleNewRouteImport } from './routes/settle/new'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as ExpenseNewRouteImport } from './routes/expense/new'
+import { Route as ExpenseExpenseIdRouteImport } from './routes/expense/$expenseId'
 import { Route as authVerifyEmailIndexRouteImport } from './routes/(auth)/verify-email/index'
 import { Route as authResetPasswordIndexRouteImport } from './routes/(auth)/reset-password/index'
 import { Route as authRegisterIndexRouteImport } from './routes/(auth)/register/index'
 import { Route as authLoginIndexRouteImport } from './routes/(auth)/login/index'
 import { Route as authForgotPasswordIndexRouteImport } from './routes/(auth)/forgot-password/index'
 import { Route as GroupsGroupIdSettingsRouteImport } from './routes/groups/$groupId/settings'
+import { Route as ExpenseExpenseIdEditRouteImport } from './routes/expense/$expenseId/edit'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -83,6 +85,11 @@ const ExpenseNewRoute = ExpenseNewRouteImport.update({
   path: '/expense/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExpenseExpenseIdRoute = ExpenseExpenseIdRouteImport.update({
+  id: '/expense/$expenseId',
+  path: '/expense/$expenseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const authVerifyEmailIndexRoute = authVerifyEmailIndexRouteImport.update({
   id: '/(auth)/verify-email/',
   path: '/verify-email/',
@@ -113,6 +120,11 @@ const GroupsGroupIdSettingsRoute = GroupsGroupIdSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => GroupsGroupIdRoute,
 } as any)
+const ExpenseExpenseIdEditRoute = ExpenseExpenseIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ExpenseExpenseIdRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -123,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/expense/$expenseId': typeof ExpenseExpenseIdRouteWithChildren
   '/expense/new': typeof ExpenseNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
   '/settle/new': typeof SettleNewRoute
@@ -132,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/friends/': typeof FriendsIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/expense/$expenseId/edit': typeof ExpenseExpenseIdEditRoute
   '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
   '/forgot-password/': typeof authForgotPasswordIndexRoute
   '/login/': typeof authLoginIndexRoute
@@ -143,6 +157,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/expense/$expenseId': typeof ExpenseExpenseIdRouteWithChildren
   '/expense/new': typeof ExpenseNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
   '/settle/new': typeof SettleNewRoute
@@ -152,6 +167,7 @@ export interface FileRoutesByTo {
   '/friends': typeof FriendsIndexRoute
   '/groups': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/expense/$expenseId/edit': typeof ExpenseExpenseIdEditRoute
   '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
   '/forgot-password': typeof authForgotPasswordIndexRoute
   '/login': typeof authLoginIndexRoute
@@ -164,6 +180,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/expense/$expenseId': typeof ExpenseExpenseIdRouteWithChildren
   '/expense/new': typeof ExpenseNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRouteWithChildren
   '/settle/new': typeof SettleNewRoute
@@ -173,6 +190,7 @@ export interface FileRoutesById {
   '/friends/': typeof FriendsIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/expense/$expenseId/edit': typeof ExpenseExpenseIdEditRoute
   '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
   '/(auth)/forgot-password/': typeof authForgotPasswordIndexRoute
   '/(auth)/login/': typeof authLoginIndexRoute
@@ -186,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/expense/$expenseId'
     | '/expense/new'
     | '/groups/$groupId'
     | '/settle/new'
@@ -195,6 +214,7 @@ export interface FileRouteTypes {
     | '/friends/'
     | '/groups/'
     | '/api/auth/$'
+    | '/expense/$expenseId/edit'
     | '/groups/$groupId/settings'
     | '/forgot-password/'
     | '/login/'
@@ -206,6 +226,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/expense/$expenseId'
     | '/expense/new'
     | '/groups/$groupId'
     | '/settle/new'
@@ -215,6 +236,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/groups'
     | '/api/auth/$'
+    | '/expense/$expenseId/edit'
     | '/groups/$groupId/settings'
     | '/forgot-password'
     | '/login'
@@ -226,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/expense/$expenseId'
     | '/expense/new'
     | '/groups/$groupId'
     | '/settle/new'
@@ -235,6 +258,7 @@ export interface FileRouteTypes {
     | '/friends/'
     | '/groups/'
     | '/api/auth/$'
+    | '/expense/$expenseId/edit'
     | '/groups/$groupId/settings'
     | '/(auth)/forgot-password/'
     | '/(auth)/login/'
@@ -247,6 +271,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ExpenseExpenseIdRoute: typeof ExpenseExpenseIdRouteWithChildren
   ExpenseNewRoute: typeof ExpenseNewRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRouteWithChildren
   SettleNewRoute: typeof SettleNewRoute
@@ -342,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExpenseNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/expense/$expenseId': {
+      id: '/expense/$expenseId'
+      path: '/expense/$expenseId'
+      fullPath: '/expense/$expenseId'
+      preLoaderRoute: typeof ExpenseExpenseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(auth)/verify-email/': {
       id: '/(auth)/verify-email/'
       path: '/verify-email'
@@ -384,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsGroupIdSettingsRouteImport
       parentRoute: typeof GroupsGroupIdRoute
     }
+    '/expense/$expenseId/edit': {
+      id: '/expense/$expenseId/edit'
+      path: '/edit'
+      fullPath: '/expense/$expenseId/edit'
+      preLoaderRoute: typeof ExpenseExpenseIdEditRouteImport
+      parentRoute: typeof ExpenseExpenseIdRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -393,6 +432,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface ExpenseExpenseIdRouteChildren {
+  ExpenseExpenseIdEditRoute: typeof ExpenseExpenseIdEditRoute
+}
+
+const ExpenseExpenseIdRouteChildren: ExpenseExpenseIdRouteChildren = {
+  ExpenseExpenseIdEditRoute: ExpenseExpenseIdEditRoute,
+}
+
+const ExpenseExpenseIdRouteWithChildren =
+  ExpenseExpenseIdRoute._addFileChildren(ExpenseExpenseIdRouteChildren)
 
 interface GroupsGroupIdRouteChildren {
   GroupsGroupIdSettingsRoute: typeof GroupsGroupIdSettingsRoute
@@ -410,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ExpenseExpenseIdRoute: ExpenseExpenseIdRouteWithChildren,
   ExpenseNewRoute: ExpenseNewRoute,
   GroupsGroupIdRoute: GroupsGroupIdRouteWithChildren,
   SettleNewRoute: SettleNewRoute,

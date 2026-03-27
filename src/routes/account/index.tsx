@@ -1,7 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { SecurityCheckIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { useState } from "react"
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
@@ -10,7 +8,7 @@ import { authClient, getAuthErrorMessage } from "@/lib/auth-client"
 import { getAccountPageData } from "@/lib/dashboard-server"
 
 export const Route = createFileRoute("/account/")({
-  loader: async () => getAccountPageData(),
+  loader: () => getAccountPageData(),
   head: () => ({
     meta: [
       {
@@ -25,10 +23,212 @@ export const Route = createFileRoute("/account/")({
   component: AccountPage,
 })
 
+type PendingInvitationRow = {
+  id: string
+  organizationName: string
+  invitedEmail: string
+  role: string
+  createdAt: Date
+  expiresAt: Date | null
+}
+
+function safeDate(value: unknown) {
+  if (value instanceof Date) {
+    return value
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed
+    }
+  }
+
+  return null
+}
+
+function normalizePendingInvitations(input: unknown): Array<PendingInvitationRow> {
+  const now = Date.now()
+  const invitations = Array.isArray(input) ? input : []
+
+  return invitations
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null
+      }
+
+      const invitation = entry as Record<string, unknown>
+      const statusValue = invitation.status
+      const status = typeof statusValue === "string" ? statusValue : "pending"
+      if (status !== "pending") {
+        return null
+      }
+
+      const id = invitation.id
+      if (typeof id !== "string" || id.trim().length === 0) {
+        return null
+      }
+
+      const expiresAt = safeDate(invitation.expiresAt)
+      if (expiresAt && expiresAt.getTime() <= now) {
+        return null
+      }
+
+      const createdAt = safeDate(invitation.createdAt) ?? new Date()
+      const role =
+        typeof invitation.role === "string" && invitation.role.length > 0
+          ? invitation.role
+          : "member"
+      const invitedEmail =
+        typeof invitation.email === "string" && invitation.email.length > 0
+          ? invitation.email
+          : ""
+
+      const organizationNameFromFlat = invitation.organizationName
+      const organizationNameFromObject =
+        invitation.organization &&
+        typeof invitation.organization === "object" &&
+        "name" in invitation.organization &&
+        typeof invitation.organization.name === "string"
+          ? invitation.organization.name
+          : null
+      const organizationName =
+        typeof organizationNameFromFlat === "string" &&
+        organizationNameFromFlat.length > 0
+          ? organizationNameFromFlat
+          : organizationNameFromObject || "Unknown group"
+
+      return {
+        id,
+        organizationName,
+        invitedEmail,
+        role,
+        createdAt,
+        expiresAt,
+      }
+    })
+    .filter((entry): entry is PendingInvitationRow => entry !== null)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+}
+
+function formatDateLabel(value: Date) {
+  return value.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
 function AccountPage() {
   const data = Route.useLoaderData()
   const navigate = useNavigate()
+  const router = useRouter()
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [invitations, setInvitations] = useState<Array<PendingInvitationRow>>([])
+  const [isLoadingInvitations, setIsLoadingInvitations] = useState(true)
+  const [isRefreshingInvitations, setIsRefreshingInvitations] = useState(false)
+  const [resolvingInvitationId, setResolvingInvitationId] = useState("")
+
+  const loadInvitations = async (options?: { showErrorToast?: boolean }) => {
+    const showErrorToast = options?.showErrorToast ?? true
+    try {
+      const { data: invitationData, error } =
+        await authClient.organization.listUserInvitations()
+
+      if (error) {
+        if (showErrorToast) {
+          toast.error("Could not load invitations", {
+            description: getAuthErrorMessage(error),
+          })
+        }
+        return
+      }
+
+      setInvitations(normalizePendingInvitations(invitationData))
+    } catch (error) {
+      if (showErrorToast) {
+        toast.error("Could not load invitations", {
+          description: getAuthErrorMessage(error),
+        })
+      }
+    } finally {
+      setIsLoadingInvitations(false)
+      setIsRefreshingInvitations(false)
+    }
+  }
+
+  useEffect(() => {
+    let isActive = true
+
+    const run = async () => {
+      if (!isActive) {
+        return
+      }
+
+      await loadInvitations()
+    }
+
+    void run()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
+
+  const onResolveInvitation = async (
+    entry: PendingInvitationRow,
+    action: "accept" | "reject"
+  ) => {
+    setResolvingInvitationId(entry.id)
+    setIsRefreshingInvitations(true)
+    try {
+      const result =
+        action === "accept"
+          ? await authClient.organization.acceptInvitation({
+              invitationId: entry.id,
+            })
+          : await authClient.organization.rejectInvitation({
+              invitationId: entry.id,
+            })
+
+      if (result.error) {
+        toast.error(
+          action === "accept"
+            ? "Could not accept invitation"
+            : "Could not reject invitation",
+          {
+            description: getAuthErrorMessage(result.error),
+          }
+        )
+        await loadInvitations({ showErrorToast: false })
+        return
+      }
+
+      toast.success(
+        action === "accept"
+          ? `Joined ${entry.organizationName}`
+          : `Rejected invite to ${entry.organizationName}`
+      )
+
+      await Promise.all([
+        loadInvitations({ showErrorToast: false }),
+        router.invalidate(),
+      ])
+    } catch (error) {
+      toast.error(
+        action === "accept"
+          ? "Could not accept invitation"
+          : "Could not reject invitation",
+        {
+          description: getAuthErrorMessage(error),
+        }
+      )
+      await loadInvitations({ showErrorToast: false })
+    } finally {
+      setResolvingInvitationId("")
+      setIsRefreshingInvitations(false)
+    }
+  }
 
   const handleLogout = async () => {
     setIsSigningOut(true)
@@ -52,64 +252,28 @@ function AccountPage() {
   }
 
   return (
-    <DashboardShell
-      title="Account"
-      description="Account visibility, active ledgers, and sign-in profile context."
-      headerActions={
-        <div className="inline-flex items-center rounded-xl border border-border bg-background/80 px-3 py-2 text-xs text-muted-foreground">
-          <HugeiconsIcon
-            icon={SecurityCheckIcon}
-            className="mr-1.5 size-3.5"
-            strokeWidth={1.7}
-          />
-          Verified auth session
-        </div>
-      }
-    >
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border/80 bg-background/95 p-4">
-          <h2 className="font-heading text-xl">Profile</h2>
-          <div className="mt-3 space-y-3">
-            <div className="rounded-xl border border-border/70 px-3 py-3">
-              <p className="text-xs text-muted-foreground uppercase">Name</p>
-              <p className="mt-1 text-sm font-medium">{data.user.name}</p>
-            </div>
-            <div className="rounded-xl border border-border/70 px-3 py-3">
-              <p className="text-xs text-muted-foreground uppercase">Email</p>
-              <p className="mt-1 text-sm font-medium">{data.user.email}</p>
-            </div>
-            <div className="rounded-xl border border-border/70 px-3 py-3">
-              <p className="text-xs text-muted-foreground uppercase">User id</p>
-              <p className="font-mono-ui mt-1 text-xs break-all">
-                {data.user.id}
+    <DashboardShell title="Account">
+      <div className="mx-auto w-full max-w-3xl space-y-4">
+        <section className="dashboard-surface">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-medium text-foreground">
+                {data.user.name}
               </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-border/80 bg-background/95 p-4">
-          <h2 className="font-heading text-xl">Ledger footprint</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-border/70 px-3 py-3">
-              <p className="text-xs text-muted-foreground uppercase">Groups</p>
-              <p className="mt-1 font-heading text-2xl">
-                {data.stats.groupCount}
+              <p className="truncate text-sm text-muted-foreground">
+                {data.user.email}
               </p>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>
+                  {data.stats.groupCount} group
+                  {data.stats.groupCount === 1 ? "" : "s"}
+                </span>
+                <span>
+                  {data.stats.friendCount} friend ledger
+                  {data.stats.friendCount === 1 ? "" : "s"}
+                </span>
+              </div>
             </div>
-            <div className="rounded-xl border border-border/70 px-3 py-3">
-              <p className="text-xs text-muted-foreground uppercase">
-                Friend ledgers
-              </p>
-              <p className="mt-1 font-heading text-2xl">
-                {data.stats.friendCount}
-              </p>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Password, verification, and session controls continue to be handled
-            by Better Auth flows.
-          </p>
-          <div className="mt-4">
             <Button
               type="button"
               variant="destructive"
@@ -120,6 +284,65 @@ function AccountPage() {
               {isSigningOut ? "Signing out..." : "Log out"}
             </Button>
           </div>
+        </section>
+
+        <section id="group-invitations" className="dashboard-surface">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="font-heading text-xl">Invitations</h2>
+            <span className="text-xs text-muted-foreground">
+              {invitations.length} pending
+            </span>
+          </div>
+
+          {isLoadingInvitations ? (
+            <p className="text-sm text-muted-foreground">Loading invitations...</p>
+          ) : invitations.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No pending invitations.
+            </p>
+          ) : (
+            <div className="divide-y divide-border/70">
+              {invitations.map((entry) => {
+                const isResolving = resolvingInvitationId === entry.id
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {entry.organizationName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {entry.role} · invited {formatDateLabel(entry.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-lg"
+                        disabled={isResolving || isRefreshingInvitations}
+                        onClick={() => void onResolveInvitation(entry, "reject")}
+                      >
+                        {isResolving ? "Working..." : "Reject"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8 rounded-lg"
+                        disabled={isResolving || isRefreshingInvitations}
+                        onClick={() => void onResolveInvitation(entry, "accept")}
+                      >
+                        {isResolving ? "Working..." : "Accept"}
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </section>
       </div>
     </DashboardShell>

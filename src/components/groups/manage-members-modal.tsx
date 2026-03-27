@@ -1,6 +1,6 @@
 import { HandHelpingIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import type {
   OrganizationInvitationRow,
@@ -80,12 +80,15 @@ export function ManageMembersModal({
     Array<OrganizationInvitationRow>
   >([])
   const [isLoading, setIsLoading] = useState(false)
-  const [friendCandidateId, setFriendCandidateId] = useState("")
+  const [selectedFriendCandidateIds, setSelectedFriendCandidateIds] = useState<
+    Array<string>
+  >([])
   const [emailQuery, setEmailQuery] = useState("")
   const [isAddingFriend, setIsAddingFriend] = useState(false)
   const [isInvitingEmail, setIsInvitingEmail] = useState(false)
   const [removingMemberId, setRemovingMemberId] = useState("")
   const [cancellingInvitationId, setCancellingInvitationId] = useState("")
+  const friendSelectCloseGuardUntilRef = useRef(0)
 
   useEffect(() => {
     if (!open) {
@@ -135,7 +138,7 @@ export function ManageMembersModal({
       return
     }
 
-    setFriendCandidateId("")
+    setSelectedFriendCandidateIds([])
     setEmailQuery("")
     setIsAddingFriend(false)
     setIsInvitingEmail(false)
@@ -147,23 +150,33 @@ export function ManageMembersModal({
     () => new Set(members.map((entry) => entry.userId)),
     [members]
   )
-
-  const friendOptions = useMemo(
-    () => friendCandidates.filter((entry) => !memberUserIds.has(entry.id)),
-    [friendCandidates, memberUserIds]
+  const pendingInvitationEmails = useMemo(
+    () => new Set(invitations.map((entry) => entry.email.toLowerCase())),
+    [invitations]
   )
 
-  const onAddFriend = async () => {
-    if (!friendCandidateId) {
-      toast.error("Select a friend first")
+  const friendOptions = useMemo(
+    () =>
+      friendCandidates.filter(
+        (entry) =>
+          !memberUserIds.has(entry.id) &&
+          !pendingInvitationEmails.has(entry.email.toLowerCase())
+      ),
+    [friendCandidates, memberUserIds, pendingInvitationEmails]
+  )
+  const selectedFriendCount = selectedFriendCandidateIds.length
+
+  const onAddFriends = async () => {
+    if (selectedFriendCandidateIds.length === 0) {
+      toast.error("Select at least one friend")
       return
     }
 
-    const candidate = friendOptions.find(
-      (entry) => entry.id === friendCandidateId
+    const candidates = friendOptions.filter((entry) =>
+      selectedFriendCandidateIds.includes(entry.id)
     )
-    if (!candidate) {
-      toast.error("Friend option is unavailable", {
+    if (candidates.length === 0) {
+      toast.error("Selected friends are unavailable", {
         description: "Refresh and try again.",
       })
       return
@@ -171,17 +184,22 @@ export function ManageMembersModal({
 
     setIsAddingFriend(true)
     try {
-      const { error } = await authClient.organization.inviteMember({
-        organizationId: groupId,
-        email: candidate.email,
-        role: "member",
-      })
+      let successCount = 0
+      const failedNames: Array<string> = []
 
-      if (error) {
-        toast.error("Could not add member", {
-          description: getAuthErrorMessage(error),
+      for (const candidate of candidates) {
+        const { error } = await authClient.organization.inviteMember({
+          organizationId: groupId,
+          email: candidate.email,
+          role: "member",
         })
-        return
+
+        if (error) {
+          failedNames.push(candidate.name)
+          continue
+        }
+
+        successCount += 1
       }
 
       invalidateOrganizationPeopleCache(groupId)
@@ -189,8 +207,24 @@ export function ManageMembersModal({
         force: true,
       })
       setInvitations(nextInvitations)
-      setFriendCandidateId("")
-      toast.success(`Invitation sent to ${candidate.name}`)
+      setSelectedFriendCandidateIds([])
+
+      if (successCount > 0) {
+        toast.success(
+          successCount === 1
+            ? `Invitation sent to ${candidates[0]?.name ?? "friend"}`
+            : `${successCount} invitations sent`
+        )
+      }
+
+      if (failedNames.length > 0) {
+        toast.error("Some invitations could not be sent", {
+          description:
+            failedNames.length <= 3
+              ? failedNames.join(", ")
+              : `${failedNames.slice(0, 3).join(", ")} +${failedNames.length - 3} more`,
+        })
+      }
     } catch (error) {
       toast.error("Could not add member", {
         description: getAuthErrorMessage(error),
@@ -324,16 +358,63 @@ export function ManageMembersModal({
 
         {canManageMembers ? (
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2.5 rounded-2xl border border-border/70 bg-background/70 p-3">
+            <div className="space-y-2.5 rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,245,238,0.88))] p-3.5">
               <Label className="text-sm font-medium">Add from friends</Label>
               <Select
-                value={friendCandidateId}
-                onValueChange={(nextValue) =>
-                  setFriendCandidateId(nextValue ?? "")
-                }
+                multiple
+                modal={!isMobile}
+                value={selectedFriendCandidateIds}
+                onValueChange={(nextValue) => {
+                  const selectedValues = Array.isArray(nextValue)
+                    ? nextValue.filter(
+                        (value): value is string => typeof value === "string"
+                      )
+                    : []
+                  setSelectedFriendCandidateIds(selectedValues)
+                  if (isMobile) {
+                    friendSelectCloseGuardUntilRef.current = Date.now() + 220
+                  }
+                }}
+                onOpenChange={(nextOpen, details) => {
+                  if (
+                    isMobile &&
+                    !nextOpen &&
+                    Date.now() < friendSelectCloseGuardUntilRef.current
+                  ) {
+                    details.cancel()
+                  }
+                }}
+                disabled={friendOptions.length === 0 || isAddingFriend}
               >
-                <SelectTrigger className="h-11 rounded-xl border-input/80 bg-background/80">
-                  <SelectValue placeholder="Select a friend" />
+                <SelectTrigger className="min-h-11 w-full rounded-xl border-input/80 bg-background/85">
+                  <SelectValue
+                    placeholder={
+                      friendOptions.length > 0
+                        ? "Select friend members"
+                        : "No eligible friends left"
+                    }
+                  >
+                    {(value) => {
+                      const selectedValues = Array.isArray(value)
+                        ? value.filter(
+                            (entry): entry is string => typeof entry === "string"
+                          )
+                        : []
+                      if (selectedValues.length === 0) {
+                        return "Select friend members"
+                      }
+
+                      const selectedNames = friendOptions
+                        .filter((entry) => selectedValues.includes(entry.id))
+                        .map((entry) => entry.name)
+
+                      if (selectedNames.length <= 2) {
+                        return selectedNames.join(", ")
+                      }
+
+                      return `${selectedNames.slice(0, 2).join(", ")} +${selectedNames.length - 2}`
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent align="start" sideOffset={6}>
                   {friendOptions.length === 0 ? (
@@ -349,17 +430,24 @@ export function ManageMembersModal({
                   )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {selectedFriendCount} selected
+              </p>
               <Button
                 type="button"
-                onClick={onAddFriend}
-                disabled={!friendCandidateId || isAddingFriend}
+                onClick={onAddFriends}
+                disabled={selectedFriendCount === 0 || isAddingFriend}
                 className="h-10 rounded-xl"
               >
-                {isAddingFriend ? "Adding..." : "Add friend"}
+                {isAddingFriend
+                  ? "Sending..."
+                  : selectedFriendCount > 1
+                    ? `Invite ${selectedFriendCount} friends`
+                    : "Invite selected friend"}
               </Button>
             </div>
 
-            <div className="space-y-2.5 rounded-2xl border border-border/70 bg-background/70 p-3">
+            <div className="space-y-2.5 rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,245,238,0.88))] p-3.5">
               <Label className="text-sm font-medium">Invite by email</Label>
               <Input
                 value={emailQuery}

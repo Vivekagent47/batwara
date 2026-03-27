@@ -1,6 +1,7 @@
-import { and, desc, eq, inArray, or } from "drizzle-orm"
+import { and, desc, eq, gt, inArray, or } from "drizzle-orm"
 import { redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
+import { getRequest } from "@tanstack/react-start/server"
 
 import { db } from "@/db"
 import {
@@ -9,12 +10,15 @@ import {
   expenseParticipant,
   friendLink,
   groupSettings,
+  invitation,
   member,
   organization,
   settlement,
   user,
 } from "@/db/schema"
+import { auth } from "@/lib/auth"
 import { getServerAuthSession } from "@/lib/auth-session"
+import { settlementsDisabledMessage, settlementsEnabled } from "@/lib/feature-flags"
 import { enforceRateLimit } from "@/lib/rate-limit"
 
 export type LedgerContextType = "group" | "friend"
@@ -48,6 +52,10 @@ type ActivityItem = {
     id: string
     name: string
   }
+  expenseImpact: {
+    direction: "pay" | "collect"
+    amountMinor: number
+  } | null
 }
 
 type GroupInfo = {
@@ -58,6 +66,7 @@ type GroupInfo = {
   memberCount: number
   simplifyDebts: boolean
   defaultCurrency: string
+  netMinor: number
 }
 
 type FriendInfo = {
@@ -77,6 +86,8 @@ type ContextMember = {
 }
 
 type UserLookup = Map<string, LedgerUser>
+
+const GROUP_EXPENSE_PAGE_SIZE = 15
 
 function safeDate(value: Date | null | undefined) {
   return value ?? new Date()
@@ -313,6 +324,87 @@ async function getUserLookup(userIds: Array<string>) {
   return new Map(rows.map((entry) => [entry.id, entry])) as UserLookup
 }
 
+async function getGroupNetByUser(userId: string, groupIds: Array<string>) {
+  if (groupIds.length === 0) {
+    return new Map<string, number>()
+  }
+
+  const [expenseRows, settlementRows] = await Promise.all([
+    db
+      .select({
+        organizationId: expense.organizationId,
+        paidByUserId: expense.paidByUserId,
+        participantUserId: expenseParticipant.userId,
+        owedAmountMinor: expenseParticipant.owedAmountMinor,
+      })
+      .from(expenseParticipant)
+      .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
+      .where(
+        and(
+          inArray(expense.organizationId, groupIds),
+          or(
+            eq(expense.paidByUserId, userId),
+            eq(expenseParticipant.userId, userId)
+          )
+        )
+      ),
+    db
+      .select({
+        organizationId: settlement.organizationId,
+        payerUserId: settlement.payerUserId,
+        payeeUserId: settlement.payeeUserId,
+        amountMinor: settlement.amountMinor,
+      })
+      .from(settlement)
+      .where(
+        and(
+          inArray(settlement.organizationId, groupIds),
+          or(eq(settlement.payerUserId, userId), eq(settlement.payeeUserId, userId))
+        )
+      ),
+  ])
+
+  const groupNetMap = new Map<string, number>()
+
+  for (const row of expenseRows) {
+    if (!row.organizationId) {
+      continue
+    }
+
+    let net = groupNetMap.get(row.organizationId) ?? 0
+
+    if (row.paidByUserId === userId) {
+      net += row.owedAmountMinor
+    }
+
+    if (row.participantUserId === userId) {
+      net -= row.owedAmountMinor
+    }
+
+    groupNetMap.set(row.organizationId, net)
+  }
+
+  for (const row of settlementRows) {
+    if (!row.organizationId) {
+      continue
+    }
+
+    let net = groupNetMap.get(row.organizationId) ?? 0
+
+    if (row.payerUserId === userId) {
+      net += row.amountMinor
+    }
+
+    if (row.payeeUserId === userId) {
+      net -= row.amountMinor
+    }
+
+    groupNetMap.set(row.organizationId, net)
+  }
+
+  return groupNetMap
+}
+
 async function getUserGroups(userId: string) {
   const groupRows = await db
     .select({
@@ -332,22 +424,24 @@ async function getUserGroups(userId: string) {
 
   const groupIds = groupRows.map((entry) => entry.id)
 
-  const memberCountRows = await db
-    .select({
-      organizationId: member.organizationId,
-      count: member.userId,
-    })
-    .from(member)
-    .where(inArray(member.organizationId, groupIds))
-
-  const groupSettingsRows = await db
-    .select({
-      organizationId: groupSettings.organizationId,
-      simplifyDebts: groupSettings.simplifyDebts,
-      defaultCurrency: groupSettings.defaultCurrency,
-    })
-    .from(groupSettings)
-    .where(inArray(groupSettings.organizationId, groupIds))
+  const [memberCountRows, groupSettingsRows, groupNetMap] = await Promise.all([
+    db
+      .select({
+        organizationId: member.organizationId,
+        count: member.userId,
+      })
+      .from(member)
+      .where(inArray(member.organizationId, groupIds)),
+    db
+      .select({
+        organizationId: groupSettings.organizationId,
+        simplifyDebts: groupSettings.simplifyDebts,
+        defaultCurrency: groupSettings.defaultCurrency,
+      })
+      .from(groupSettings)
+      .where(inArray(groupSettings.organizationId, groupIds)),
+    getGroupNetByUser(userId, groupIds),
+  ])
 
   const memberCountMap = new Map<string, number>()
   for (const row of memberCountRows) {
@@ -369,6 +463,7 @@ async function getUserGroups(userId: string) {
     memberCount: memberCountMap.get(entry.id) ?? 1,
     simplifyDebts: settingMap.get(entry.id)?.simplifyDebts ?? true,
     defaultCurrency: settingMap.get(entry.id)?.defaultCurrency ?? "INR",
+    netMinor: groupNetMap.get(entry.id) ?? 0,
   }))
 }
 
@@ -483,6 +578,77 @@ async function getFriendMembers(friendLinkId: string) {
     .filter((entry): entry is LedgerUser => Boolean(entry))
 }
 
+async function getExpenseContextForUser(userId: string, expenseId: string) {
+  const expenseRows = await db
+    .select({
+      id: expense.id,
+      organizationId: expense.organizationId,
+      friendLinkId: expense.friendLinkId,
+      title: expense.title,
+      description: expense.description,
+      currency: expense.currency,
+      totalAmountMinor: expense.totalAmountMinor,
+      splitMethod: expense.splitMethod,
+      splitMeta: expense.splitMeta,
+      incurredAt: expense.incurredAt,
+      createdAt: expense.createdAt,
+      updatedAt: expense.updatedAt,
+      paidByUserId: expense.paidByUserId,
+      paidByName: user.name,
+    })
+    .from(expense)
+    .innerJoin(user, eq(expense.paidByUserId, user.id))
+    .where(eq(expense.id, expenseId))
+    .limit(1)
+
+  const expenseRow = expenseRows.at(0)
+  if (!expenseRow) {
+    throw new Error("Expense not found.")
+  }
+
+  if (expenseRow.organizationId) {
+    await assertGroupAccess(userId, expenseRow.organizationId)
+    const groupRows = await db
+      .select({
+        id: organization.id,
+        name: organization.name,
+      })
+      .from(organization)
+      .where(eq(organization.id, expenseRow.organizationId))
+      .limit(1)
+
+    const group = groupRows.at(0)
+    if (!group) {
+      throw new Error("Group not found.")
+    }
+
+    return {
+      expenseRow,
+      contextType: "group" as const,
+      contextId: group.id,
+      contextName: group.name,
+      members: await getGroupMembers(group.id),
+    }
+  }
+
+  if (expenseRow.friendLinkId) {
+    await assertFriendAccess(userId, expenseRow.friendLinkId)
+    const members = await getFriendMembers(expenseRow.friendLinkId)
+
+    const counterpart = members.find((entry) => entry.id !== userId)
+
+    return {
+      expenseRow,
+      contextType: "friend" as const,
+      contextId: expenseRow.friendLinkId,
+      contextName: counterpart?.name ?? "Friend ledger",
+      members,
+    }
+  }
+
+  throw new Error("Expense ledger context is invalid.")
+}
+
 async function getAccessibleActivities(
   groupIds: Array<string>,
   friendLinkIds: Array<string>,
@@ -531,7 +697,69 @@ async function getAccessibleActivities(
       id: entry.actorUserId,
       name: actorLookup.get(entry.actorUserId)?.name ?? "Unknown user",
     },
+    expenseImpact: null,
   }))
+}
+
+async function attachExpenseActivityImpacts(
+  activity: Array<ActivityItem>,
+  userId: string
+) {
+  const expenseIds = Array.from(
+    new Set(
+      activity
+        .filter((entry) => entry.entityType === "expense")
+        .map((entry) => entry.entityId)
+    )
+  )
+
+  if (expenseIds.length === 0) {
+    return activity
+  }
+
+  const rows = await db
+    .select({
+      expenseId: expense.id,
+      paidAmountMinor: expenseParticipant.paidAmountMinor,
+      owedAmountMinor: expenseParticipant.owedAmountMinor,
+    })
+    .from(expenseParticipant)
+    .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
+    .where(
+      and(eq(expenseParticipant.userId, userId), inArray(expense.id, expenseIds))
+    )
+
+  const impactMap = new Map<
+    string,
+    {
+      direction: "pay" | "collect"
+      amountMinor: number
+    }
+  >()
+
+  for (const row of rows) {
+    const netMinor = row.paidAmountMinor - row.owedAmountMinor
+    if (netMinor > 0) {
+      impactMap.set(row.expenseId, {
+        direction: "collect",
+        amountMinor: netMinor,
+      })
+    } else if (netMinor < 0) {
+      impactMap.set(row.expenseId, {
+        direction: "pay",
+        amountMinor: Math.abs(netMinor),
+      })
+    }
+  }
+
+  return activity.map((entry) =>
+    entry.entityType === "expense"
+      ? {
+          ...entry,
+          expenseImpact: impactMap.get(entry.entityId) ?? null,
+        }
+      : entry
+  )
 }
 
 async function getPairwiseSummary(
@@ -726,9 +954,19 @@ export const getDashboardHomeData = createServerFn({ method: "GET" }).handler(
     const groupIds = groups.map((entry) => entry.id)
     const friendIds = friends.map((entry) => entry.id)
 
-    const [summary, activity] = await Promise.all([
+    const [summary, activity, pendingInvitationRows] = await Promise.all([
       getPairwiseSummary(currentUser.id, groupIds, friendIds),
       getAccessibleActivities(groupIds, friendIds, 14),
+      db
+        .select({ id: invitation.id })
+        .from(invitation)
+        .where(
+          and(
+            eq(invitation.email, currentUser.email.toLowerCase()),
+            eq(invitation.status, "pending"),
+            gt(invitation.expiresAt, new Date())
+          )
+        ),
     ])
 
     return {
@@ -742,6 +980,7 @@ export const getDashboardHomeData = createServerFn({ method: "GET" }).handler(
       },
       suggestions: summary.suggestions.slice(0, 8),
       activity,
+      pendingInvitationCount: pendingInvitationRows.length,
     }
   }
 )
@@ -830,7 +1069,14 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
       throw new Error("Group not found.")
     }
 
-    const [members, expenseRows, settlementRows, recentExpenses, friends] =
+    const [
+      members,
+      expenseRows,
+      settlementRows,
+      recentExpenseRows,
+      friends,
+      activity,
+    ] =
       await Promise.all([
         getGroupMembers(data.groupId),
         db
@@ -864,9 +1110,10 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
           .from(expense)
           .innerJoin(user, eq(expense.paidByUserId, user.id))
           .where(eq(expense.organizationId, data.groupId))
-          .orderBy(desc(expense.incurredAt))
-          .limit(20),
+          .orderBy(desc(expense.incurredAt), desc(expense.id))
+          .limit(GROUP_EXPENSE_PAGE_SIZE + 1),
         getUserFriends(currentUser.id),
+        getAccessibleActivities([data.groupId], [], 24),
       ])
 
     const net = buildNetMap(expenseRows, settlementRows)
@@ -891,6 +1138,15 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
       }
     }
 
+    const hasMoreRecentExpenses =
+      recentExpenseRows.length > GROUP_EXPENSE_PAGE_SIZE
+    const recentExpenses = recentExpenseRows
+      .slice(0, GROUP_EXPENSE_PAGE_SIZE)
+      .map((entry) => ({
+        ...entry,
+        incurredAt: safeDate(entry.incurredAt),
+      }))
+
     return {
       group,
       viewerRole: getPrimaryMemberRole(membership.role),
@@ -909,10 +1165,63 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
         payerName: memberLookup.get(entry.payerUserId)?.name ?? "Unknown user",
         payeeName: memberLookup.get(entry.payeeUserId)?.name ?? "Unknown user",
       })),
-      recentExpenses: recentExpenses.map((entry) => ({
+      recentExpenses,
+      recentExpensesHasMore: hasMoreRecentExpenses,
+      activity,
+    }
+  })
+
+export const getGroupExpensesPage = createServerFn({ method: "GET" })
+  .inputValidator(
+    (input: { groupId: string; offset?: number; limit?: number }) => input
+  )
+  .handler(async ({ data }) => {
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `group-expenses-page:${currentUser.id}:${data.groupId}`,
+      windowMs: 60_000,
+      max: 240,
+    })
+
+    const groupId = data.groupId.trim()
+    if (!groupId) {
+      throw new Error("Group id is required.")
+    }
+
+    await assertGroupAccess(currentUser.id, groupId)
+
+    const offset = Math.max(0, Math.floor(data.offset ?? 0))
+    const requestedLimit = Math.max(
+      1,
+      Math.min(data.limit ?? GROUP_EXPENSE_PAGE_SIZE, 40)
+    )
+
+    const rows = await db
+      .select({
+        id: expense.id,
+        title: expense.title,
+        totalAmountMinor: expense.totalAmountMinor,
+        currency: expense.currency,
+        splitMethod: expense.splitMethod,
+        incurredAt: expense.incurredAt,
+        paidByUserId: expense.paidByUserId,
+        paidByName: user.name,
+      })
+      .from(expense)
+      .innerJoin(user, eq(expense.paidByUserId, user.id))
+      .where(eq(expense.organizationId, groupId))
+      .orderBy(desc(expense.incurredAt), desc(expense.id))
+      .limit(requestedLimit + 1)
+      .offset(offset)
+
+    const hasMore = rows.length > requestedLimit
+
+    return {
+      expenses: rows.slice(0, requestedLimit).map((entry) => ({
         ...entry,
         incurredAt: safeDate(entry.incurredAt),
       })),
+      hasMore,
     }
   })
 
@@ -988,6 +1297,75 @@ export const getGroupSettingsData = createServerFn({ method: "GET" })
     }
   })
 
+export const leaveGroup = createServerFn({ method: "POST" })
+  .inputValidator((input: { groupId: string }) => input)
+  .handler(async ({ data }) => {
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `leave-group:${currentUser.id}:${data.groupId}`,
+      windowMs: 60_000,
+      max: 20,
+    })
+
+    const groupId = data.groupId.trim()
+    if (!groupId) {
+      throw new Error("Group id is required.")
+    }
+
+    const membershipRows = await db
+      .select({ role: member.role })
+      .from(member)
+      .where(and(eq(member.organizationId, groupId), eq(member.userId, currentUser.id)))
+      .limit(1)
+
+    const membership = membershipRows.at(0)
+    if (!membership) {
+      throw new Error("You are no longer a member of this group.")
+    }
+
+    if (parseMemberRoles(membership.role).includes("owner")) {
+      throw new Error("Group owners cannot leave the group.")
+    }
+
+    const groupRows = await db
+      .select({
+        id: organization.id,
+        name: organization.name,
+      })
+      .from(organization)
+      .where(eq(organization.id, groupId))
+      .limit(1)
+
+    const group = groupRows.at(0)
+    if (!group) {
+      throw new Error("Group not found.")
+    }
+
+    const now = new Date()
+
+    const request = getRequest()
+
+    await auth.api.leaveOrganization({
+      headers: new Headers(request.headers),
+      body: {
+        organizationId: groupId,
+      },
+    })
+
+    await db.insert(activityLog).values({
+      id: crypto.randomUUID(),
+      organizationId: groupId,
+      actorUserId: currentUser.id,
+      entityType: "group_member",
+      entityId: currentUser.id,
+      action: "left",
+      summary: `${currentUser.name} left ${group.name}.`,
+      createdAt: now,
+    })
+
+    return { success: true }
+  })
+
 export const getFriendsPageData = createServerFn({ method: "GET" }).handler(
   async () => {
     const currentUser = await requireLedgerUser()
@@ -1034,10 +1412,14 @@ export const getActivityPageData = createServerFn({ method: "GET" }).handler(
       getUserFriends(currentUser.id),
     ])
 
-    const activity = await getAccessibleActivities(
+    const baseActivity = await getAccessibleActivities(
       groups.map((entry) => entry.id),
       friends.map((entry) => entry.id),
       50
+    )
+    const activity = await attachExpenseActivityImpacts(
+      baseActivity,
+      currentUser.id
     )
 
     return {
@@ -1120,6 +1502,95 @@ export const getLedgerMembers = createServerFn({ method: "GET" })
     await assertFriendAccess(currentUser.id, contextId)
     return {
       members: await getFriendMembers(contextId),
+    }
+  })
+
+export const getExpenseDetailsData = createServerFn({ method: "GET" })
+  .inputValidator((input: { expenseId: string }) => input)
+  .handler(async ({ data }) => {
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `expense-details:${currentUser.id}:${data.expenseId}`,
+      windowMs: 60_000,
+      max: 180,
+    })
+
+    const expenseId = data.expenseId.trim()
+    if (!expenseId) {
+      throw new Error("Expense id is required.")
+    }
+
+    const context = await getExpenseContextForUser(currentUser.id, expenseId)
+
+    const participantRows = await db
+      .select({
+        userId: expenseParticipant.userId,
+        name: user.name,
+        email: user.email,
+        paidAmountMinor: expenseParticipant.paidAmountMinor,
+        owedAmountMinor: expenseParticipant.owedAmountMinor,
+      })
+      .from(expenseParticipant)
+      .innerJoin(user, eq(expenseParticipant.userId, user.id))
+      .where(eq(expenseParticipant.expenseId, context.expenseRow.id))
+      .orderBy(user.name)
+
+    let splitInput: Array<SplitInputLine> = []
+    if (context.expenseRow.splitMeta) {
+      try {
+        const parsed = JSON.parse(context.expenseRow.splitMeta)
+        if (Array.isArray(parsed)) {
+          const lines: Array<SplitInputLine> = []
+          for (const entry of parsed) {
+            const userId = typeof entry?.userId === "string" ? entry.userId : ""
+            if (!userId) {
+              continue
+            }
+
+            const value =
+              typeof entry?.value === "number" && Number.isFinite(entry.value)
+                ? entry.value
+                : undefined
+
+            lines.push({ userId, value })
+          }
+
+          splitInput = lines
+        }
+      } catch {
+        splitInput = []
+      }
+    }
+
+    return {
+      context: {
+        type: context.contextType,
+        id: context.contextId,
+        name: context.contextName,
+      },
+      expense: {
+        id: context.expenseRow.id,
+        title: context.expenseRow.title,
+        description: context.expenseRow.description ?? "",
+        currency: context.expenseRow.currency,
+        totalAmountMinor: context.expenseRow.totalAmountMinor,
+        splitMethod: context.expenseRow.splitMethod as ExpenseSplitMethod,
+        incurredAt: safeDate(context.expenseRow.incurredAt),
+        createdAt: safeDate(context.expenseRow.createdAt),
+        updatedAt: safeDate(context.expenseRow.updatedAt),
+        paidByUserId: context.expenseRow.paidByUserId,
+        paidByName: context.expenseRow.paidByName,
+      },
+      members: context.members,
+      splitInput,
+      participants: participantRows.map((entry) => ({
+        ...entry,
+        netMinor: entry.paidAmountMinor - entry.owedAmountMinor,
+      })),
+      permissions: {
+        canEdit: true,
+        canDelete: true,
+      },
     }
   })
 
@@ -1479,6 +1950,200 @@ export const createExpense = createServerFn({ method: "POST" })
     }
   })
 
+export const updateExpense = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      expenseId: string
+      title: string
+      description?: string
+      currency?: string
+      totalAmountMinor: number
+      paidByUserId: string
+      splitMethod: ExpenseSplitMethod
+      participants: Array<SplitInputLine>
+      incurredAt?: string
+    }) => input
+  )
+  .handler(async ({ data }) => {
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `update-expense:${currentUser.id}`,
+      windowMs: 60_000,
+      max: 80,
+    })
+
+    const expenseId = data.expenseId.trim()
+    if (!expenseId) {
+      throw new Error("Expense id is required.")
+    }
+
+    const context = await getExpenseContextForUser(currentUser.id, expenseId)
+
+    const title = data.title.trim()
+    const totalAmountMinor = toMinorUnits(data.totalAmountMinor)
+
+    if (!title) {
+      throw new Error("Expense title is required.")
+    }
+
+    if (totalAmountMinor <= 0) {
+      throw new Error("Expense amount must be more than zero.")
+    }
+
+    const memberIds = new Set(context.members.map((entry) => entry.id))
+    if (!memberIds.has(data.paidByUserId)) {
+      throw new Error("Payer must belong to the selected ledger.")
+    }
+
+    const splitLines = resolveSplit(
+      totalAmountMinor,
+      data.splitMethod,
+      data.participants
+    )
+
+    for (const line of splitLines) {
+      if (!memberIds.has(line.userId)) {
+        throw new Error("Participant list includes a user outside this ledger.")
+      }
+    }
+
+    const normalizedCurrency = toCurrencyCode(data.currency)
+    const now = new Date()
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(expense)
+        .set({
+          title,
+          description: data.description?.trim() || null,
+          currency: normalizedCurrency,
+          totalAmountMinor,
+          paidByUserId: data.paidByUserId,
+          splitMethod: data.splitMethod,
+          splitMeta: JSON.stringify(data.participants),
+          incurredAt: data.incurredAt ? new Date(data.incurredAt) : now,
+          updatedAt: now,
+        })
+        .where(eq(expense.id, context.expenseRow.id))
+
+      await tx
+        .delete(expenseParticipant)
+        .where(eq(expenseParticipant.expenseId, context.expenseRow.id))
+
+      await tx.insert(expenseParticipant).values(
+        splitLines.map((line) => ({
+          id: crypto.randomUUID(),
+          expenseId: context.expenseRow.id,
+          userId: line.userId,
+          paidAmountMinor:
+            line.userId === data.paidByUserId ? totalAmountMinor : 0,
+          owedAmountMinor: line.owedAmountMinor,
+          createdAt: now,
+        }))
+      )
+
+      await tx.insert(activityLog).values({
+        id: crypto.randomUUID(),
+        organizationId:
+          context.contextType === "group" ? context.contextId : null,
+        friendLinkId:
+          context.contextType === "friend" ? context.contextId : null,
+        actorUserId: currentUser.id,
+        entityType: "expense",
+        entityId: context.expenseRow.id,
+        action: "updated",
+        summary: `${currentUser.name} updated "${title}".`,
+        metadata: JSON.stringify({
+          title,
+          totalAmountMinor,
+          currency: normalizedCurrency,
+          splitMethod: data.splitMethod,
+        }),
+        createdAt: now,
+      })
+    })
+
+    return {
+      expenseId: context.expenseRow.id,
+    }
+  })
+
+export const deleteExpense = createServerFn({ method: "POST" })
+  .inputValidator((input: { expenseId: string }) => input)
+  .handler(async ({ data }) => {
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `delete-expense:${currentUser.id}`,
+      windowMs: 60_000,
+      max: 80,
+    })
+
+    const expenseId = data.expenseId.trim()
+    if (!expenseId) {
+      throw new Error("Expense id is required.")
+    }
+
+    const context = await getExpenseContextForUser(currentUser.id, expenseId)
+
+    const participantRows = await db
+      .select({
+        userId: expenseParticipant.userId,
+        name: user.name,
+        paidAmountMinor: expenseParticipant.paidAmountMinor,
+        owedAmountMinor: expenseParticipant.owedAmountMinor,
+      })
+      .from(expenseParticipant)
+      .innerJoin(user, eq(expenseParticipant.userId, user.id))
+      .where(eq(expenseParticipant.expenseId, context.expenseRow.id))
+      .orderBy(user.name)
+
+    const now = new Date()
+    const amountLabel = new Intl.NumberFormat("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(context.expenseRow.totalAmountMinor / 100)
+
+    await db.transaction(async (tx) => {
+      await tx.delete(expense).where(eq(expense.id, context.expenseRow.id))
+
+      await tx.insert(activityLog).values({
+        id: crypto.randomUUID(),
+        organizationId:
+          context.contextType === "group" ? context.contextId : null,
+        friendLinkId:
+          context.contextType === "friend" ? context.contextId : null,
+        actorUserId: currentUser.id,
+        entityType: "expense",
+        entityId: context.expenseRow.id,
+        action: "deleted",
+        summary: `${currentUser.name} deleted expense "${context.expenseRow.title}" (${amountLabel}).`,
+        metadata: JSON.stringify({
+          deletedExpense: {
+            id: context.expenseRow.id,
+            title: context.expenseRow.title,
+            description: context.expenseRow.description,
+            currency: context.expenseRow.currency,
+            totalAmountMinor: context.expenseRow.totalAmountMinor,
+            splitMethod: context.expenseRow.splitMethod,
+            incurredAt: context.expenseRow.incurredAt,
+            paidByUserId: context.expenseRow.paidByUserId,
+            paidByName: context.expenseRow.paidByName,
+            contextType: context.contextType,
+            contextId: context.contextId,
+            participants: participantRows,
+            deletedByUserId: currentUser.id,
+            deletedByName: currentUser.name,
+          },
+        }),
+        createdAt: now,
+      })
+    })
+
+    return {
+      expenseId: context.expenseRow.id,
+    }
+  })
+
 export const createSettlement = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
@@ -1493,6 +2158,10 @@ export const createSettlement = createServerFn({ method: "POST" })
     }) => input
   )
   .handler(async ({ data }) => {
+    if (!settlementsEnabled) {
+      throw new Error(settlementsDisabledMessage)
+    }
+
     const currentUser = await requireLedgerUser()
     enforceRateLimit({
       key: `create-settlement:${currentUser.id}`,

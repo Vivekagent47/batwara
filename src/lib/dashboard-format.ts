@@ -1,10 +1,25 @@
-export function formatMoneyMinor(amountMinor: number, currency = "INR") {
+export function formatMoneyMinor(amountMinor: number, _currency?: string) {
   const amount = amountMinor / 100
   return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)
+}
+
+export function getBalanceToneByDirection(direction: "pay" | "collect") {
+  return direction === "pay" ? "balance-owe" : "balance-owed"
+}
+
+export function getBalanceToneByNetMinor(amountMinor: number) {
+  if (amountMinor > 0) {
+    return "balance-owed"
+  }
+
+  if (amountMinor < 0) {
+    return "balance-owe"
+  }
+
+  return "balance-neutral"
 }
 
 export function formatRelativeDate(input: Date) {

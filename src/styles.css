@@ -287,6 +287,18 @@
   .dashboard-label {
     @apply text-xs text-muted-foreground sm:text-sm;
   }
+
+  .balance-owe {
+    @apply text-destructive;
+  }
+
+  .balance-owed {
+    @apply text-primary;
+  }
+
+  .balance-neutral {
+    @apply text-foreground;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

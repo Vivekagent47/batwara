@@ -43,7 +43,7 @@ import {
 } from "@/lib/dashboard-server"
 
 export const Route = createFileRoute("/expense/new")({
-  loader: async () => getComposerData(),
+  loader: () => getComposerData(),
   head: () => ({
     meta: [
       {
@@ -500,7 +500,6 @@ function CreateExpensePage() {
           contextType,
           contextId,
           title: trimmedTitle,
-          currency: "INR",
           totalAmountMinor: amountMinor,
           paidByUserId: data.user.id,
           splitMethod,

@@ -16,6 +16,7 @@ type DashboardShellProps = {
   description?: string
   children: ReactNode
   headerActions?: ReactNode
+  truncateTitle?: boolean
 }
 
 const desktopLinks = [
@@ -65,6 +66,12 @@ const mobileLinks = [
     matchPrefix: "/groups",
   },
   {
+    to: "/friends",
+    label: "Friends",
+    icon: HandHelpingIcon,
+    matchPrefix: "/friends",
+  },
+  {
     to: "/activity",
     label: "Activity",
     icon: Clock03Icon,
@@ -83,11 +90,13 @@ export function DashboardShell({
   description,
   children,
   headerActions,
+  truncateTitle = false,
 }: DashboardShellProps) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
-  const showQuickAdd = !pathname.startsWith("/expense/new")
+  const showQuickAdd =
+    !pathname.startsWith("/expense/new") && !pathname.startsWith("/settle/new")
 
   return (
     <main className="relative min-h-svh px-2 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] sm:px-3 md:px-6 md:pb-8 lg:px-8">
@@ -134,19 +143,27 @@ export function DashboardShell({
         </aside>
 
         <section className="min-w-0 flex-1 rounded-3xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(247,244,236,0.82))] p-3 shadow-[0_16px_36px_rgba(28,28,24,0.08)] backdrop-blur sm:p-5 md:p-6">
-          <header className="mb-4 flex flex-col gap-3 border-b border-border/70 pb-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between sm:pb-4">
-            <div>
-              <h1 className="font-heading text-[1.85rem] leading-tight text-foreground sm:text-[2rem]">
-                {title}
-              </h1>
-              {description ? (
-                <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {description}
-                </p>
+          <header className="mb-4 border-b border-border/70 pb-3 sm:mb-5 sm:pb-4">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h1
+                  className={cn(
+                    "font-heading text-[1.85rem] leading-tight text-foreground sm:text-[2rem]",
+                    truncateTitle ? "truncate" : ""
+                  )}
+                >
+                  {title}
+                </h1>
+              </div>
+
+              {headerActions ? (
+                <div className="shrink-0 self-start">{headerActions}</div>
               ) : null}
             </div>
-            {headerActions ? (
-              <div className="shrink-0">{headerActions}</div>
+            {description ? (
+              <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {description}
+              </p>
             ) : null}
           </header>
 
@@ -168,7 +185,7 @@ export function DashboardShell({
         </Link>
       ) : null}
 
-      <nav className="fixed inset-x-1.5 bottom-[max(0.4rem,env(safe-area-inset-bottom))] z-20 grid grid-cols-4 rounded-2xl border border-border/70 bg-white/92 p-1.5 shadow-lg backdrop-blur md:hidden">
+      <nav className="fixed inset-x-1.5 bottom-[max(0.4rem,env(safe-area-inset-bottom))] z-20 grid grid-cols-5 rounded-2xl border border-border/70 bg-white/92 p-1.5 shadow-lg backdrop-blur md:hidden">
         {mobileLinks.map((entry) => {
           const active =
             pathname === entry.to || pathname.startsWith(entry.matchPrefix)

@@ -1,12 +1,13 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
-import { ArrowRight01Icon, HandHelpingIcon } from "@hugeicons/core-free-icons"
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import type { ReactNode } from "react"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { formatMoneyMinor, getBalanceToneByNetMinor } from "@/lib/dashboard-format"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -41,7 +42,7 @@ import {
 } from "@/lib/dashboard-server"
 
 export const Route = createFileRoute("/groups/")({
-  loader: async () => getGroupsPageData(),
+  loader: () => getGroupsPageData(),
   head: () => ({
     meta: [
       {
@@ -284,65 +285,28 @@ function GroupsPage() {
   return (
     <DashboardShell
       title="Groups"
-      description="Groups are organization-ledgers for trips, homes, couples, and recurring shared plans."
       headerActions={
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="dashboard-pill">
-            <HugeiconsIcon
-              icon={HandHelpingIcon}
-              className="mr-1.5 size-3.5"
-              strokeWidth={1.7}
-            />
-            {data.groups.length} active groups
-          </div>
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             className="h-10 rounded-xl"
             onClick={() => setCreateOpen(true)}
           >
-            <HugeiconsIcon
-              icon={HandHelpingIcon}
-              className="size-4"
-              strokeWidth={1.8}
-            />
-            Create group
+            New group
           </Button>
         </div>
       }
     >
-      <section className="dashboard-surface">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-heading text-xl">Your groups</h2>
-          {data.groups.length > 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 rounded-xl"
-              onClick={() => setCreateOpen(true)}
-            >
-              New group
-            </Button>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
+      <section className="mx-auto w-full max-w-3xl">
+        <div className="space-y-2.5">
           {data.groups.length === 0 ? (
-            <div className="dashboard-empty space-y-3">
-              <p>
-                No groups yet. Create your first group to start tracking shared
-                expenses.
-              </p>
+            <div className="dashboard-empty space-y-2.5">
+              <p>No groups yet.</p>
               <Button
                 type="button"
                 className="h-10 rounded-xl"
                 onClick={() => setCreateOpen(true)}
               >
-                <HugeiconsIcon
-                  icon={HandHelpingIcon}
-                  className="size-4"
-                  strokeWidth={1.8}
-                />
                 Create your first group
               </Button>
             </div>
@@ -352,19 +316,35 @@ function GroupsPage() {
                 key={group.id}
                 to="/groups/$groupId"
                 params={{ groupId: group.id }}
-                className="dashboard-list-item flex items-center justify-between text-sm"
+                className="group block rounded-2xl border border-border/70 bg-background/85 px-3 py-3 transition-colors hover:border-primary/35 hover:bg-muted/40 sm:px-3.5 sm:py-3.5"
               >
-                <div>
-                  <p className="font-medium text-foreground">{group.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {group.memberCount} members - role: {group.role}
-                  </p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground sm:text-base">
+                      {group.name}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {group.memberCount} member
+                      {group.memberCount === 1 ? "" : "s"}
+                    </p>
+                    <p
+                      className={`mt-1 truncate text-xs font-medium ${getBalanceToneByNetMinor(group.netMinor)}`}
+                    >
+                      {group.netMinor === 0
+                        ? "Balanced"
+                        : group.netMinor > 0
+                          ? `You get ${formatMoneyMinor(group.netMinor)}`
+                          : `You owe ${formatMoneyMinor(Math.abs(group.netMinor))}`}
+                    </p>
+                  </div>
+                  <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-foreground">
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      className="size-4"
+                      strokeWidth={1.7}
+                    />
+                  </span>
                 </div>
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  className="size-4 text-muted-foreground"
-                  strokeWidth={1.7}
-                />
               </Link>
             ))
           )}
