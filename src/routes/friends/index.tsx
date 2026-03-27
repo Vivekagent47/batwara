@@ -1,7 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
-import { HandHelpingIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 import { useState } from "react"
 import { toast } from "sonner"
 import type { ReactNode } from "react"
@@ -35,7 +33,7 @@ export const Route = createFileRoute("/friends/")({
   head: () => ({
     meta: [
       {
-        title: "Friend Ledgers | Batwara",
+        title: "Friends | Batwara",
       },
       {
         name: "robots",
@@ -65,10 +63,10 @@ function AddFriendLedgerModal({
         <DrawerContent className="max-h-[92svh] rounded-t-3xl border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(248,245,238,0.96))] shadow-[0_-12px_32px_rgba(21,29,21,0.18)]">
           <DrawerHeader className="items-start px-5 pb-2 text-left">
             <DrawerTitle className="font-heading text-[1.65rem] leading-none">
-              Add friend ledger
+              New friend
             </DrawerTitle>
             <DrawerDescription className="max-w-prose text-sm leading-relaxed">
-              Open a direct 1:1 ledger with a verified Batwara user.
+              Start a direct ledger with a verified Batwara user.
             </DrawerDescription>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3">
@@ -90,10 +88,10 @@ function AddFriendLedgerModal({
       >
         <DialogHeader className="border-b border-border/70 px-7 py-5">
           <DialogTitle className="font-heading text-[2rem] leading-none">
-            Add friend ledger
+            New friend
           </DialogTitle>
           <DialogDescription className="max-w-prose text-sm leading-relaxed">
-            Open a direct 1:1 ledger with a verified Batwara user.
+            Start a direct ledger with a verified Batwara user.
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[62vh] overflow-y-auto px-7 py-5">{children}</div>
@@ -127,11 +125,10 @@ function FriendsPage() {
       setCreateOpen(false)
       toast.success(
         result.alreadyExists
-          ? "Ledger already exists for this friend."
+          ? "Friend already exists."
           : "Friend ledger created.",
         {
-          description:
-            "You can now add direct expenses and settle balances from the same dashboard.",
+          description: "You can now add direct expenses in this ledger.",
         }
       )
       await router.invalidate()
@@ -147,100 +144,57 @@ function FriendsPage() {
 
   return (
     <DashboardShell
-      title="Friend ledgers"
-      description="Direct 1:1 ledgers for simple balances outside formal groups."
+      title="Friends"
       headerActions={
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="dashboard-pill">
-            <HugeiconsIcon
-              icon={HandHelpingIcon}
-              className="mr-1.5 size-3.5"
-              strokeWidth={1.7}
-            />
-            {data.friends.length} active friend ledger
-            {data.friends.length === 1 ? "" : "s"}
-          </div>
-          <Button
-            type="button"
-            className="h-10 rounded-xl"
-            onClick={() => setCreateOpen(true)}
-          >
-            <HugeiconsIcon
-              icon={HandHelpingIcon}
-              className="size-4"
-              strokeWidth={1.8}
-            />
-            Add friend ledger
-          </Button>
-        </div>
+        <Button
+          type="button"
+          className="h-10 rounded-xl"
+          onClick={() => setCreateOpen(true)}
+        >
+          New friend
+        </Button>
       }
     >
-      <section className="dashboard-surface">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-heading text-xl">Your friend ledgers</h2>
-          {data.friends.length > 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 rounded-xl"
-              onClick={() => setCreateOpen(true)}
-            >
-              New ledger
-            </Button>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
+      <section className="mx-auto w-full max-w-3xl">
+        <div className="space-y-2.5">
           {data.friends.length === 0 ? (
-            <div className="dashboard-empty space-y-3">
-              <p>
-                No friend ledgers yet. Add a verified Batwara user email to
-                start one.
-              </p>
+            <div className="dashboard-empty space-y-2.5">
+              <p>No friends yet.</p>
               <Button
                 type="button"
                 className="h-10 rounded-xl"
                 onClick={() => setCreateOpen(true)}
               >
-                <HugeiconsIcon
-                  icon={HandHelpingIcon}
-                  className="size-4"
-                  strokeWidth={1.8}
-                />
-                Add your first friend ledger
+                Add your first friend
               </Button>
             </div>
           ) : (
             data.friends.map((entry) => (
               <div
                 key={entry.id}
-                className="dashboard-list-item flex items-center justify-between gap-3"
+                className="rounded-2xl border border-border/70 bg-background/85 px-3 py-3 sm:px-3.5 sm:py-3.5"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {entry.otherUser.name}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {entry.otherUser.email}
-                  </p>
-                </div>
-                <div className="text-right">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground sm:text-base">
+                      {entry.otherUser.name}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {entry.otherUser.email}
+                    </p>
+                  </div>
                   {entry.summary ? (
                     <p
-                      className={`${getBalanceToneByDirection(entry.summary.direction)} text-sm font-medium [font-variant-numeric:tabular-nums]`}
+                      className={`min-w-26 text-right text-xs font-medium [font-variant-numeric:tabular-nums] ${getBalanceToneByDirection(entry.summary.direction)}`}
                     >
                       {entry.summary.direction === "pay"
                         ? "You owe "
-                        : "You are owed "}
+                        : "You get "}
                       {formatMoneyMinor(entry.summary.amountMinor)}
                     </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Balanced</p>
+                    <p className="text-xs text-muted-foreground">Balanced</p>
                   )}
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {entry.status}
-                  </p>
                 </div>
               </div>
             ))
@@ -267,7 +221,7 @@ function FriendsPage() {
               disabled={isPending}
               onClick={() => void onAddFriend()}
             >
-              {isPending ? "Adding..." : "Add friend ledger"}
+              {isPending ? "Adding..." : "Add friend"}
             </Button>
           </div>
         }
@@ -290,7 +244,7 @@ function FriendsPage() {
             className="h-11 rounded-xl border-input/80 bg-background/75"
           />
           <p className="text-xs text-muted-foreground">
-            Use a verified Batwara user email to open a direct private ledger.
+            Use a verified Batwara user email.
           </p>
         </section>
       </AddFriendLedgerModal>

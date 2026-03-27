@@ -5,6 +5,7 @@ import {
   PackageIcon,
   ReceiptTextIcon,
   SecurityCheckIcon,
+  UserMultipleIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import type { ReactNode } from "react"
@@ -35,7 +36,7 @@ const desktopLinks = [
   {
     to: "/friends",
     label: "Friends",
-    icon: HandHelpingIcon,
+    icon: UserMultipleIcon,
     matchPrefix: "/friends",
   },
   {
@@ -68,7 +69,7 @@ const mobileLinks = [
   {
     to: "/friends",
     label: "Friends",
-    icon: HandHelpingIcon,
+    icon: UserMultipleIcon,
     matchPrefix: "/friends",
   },
   {
