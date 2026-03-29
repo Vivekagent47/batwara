@@ -268,6 +268,38 @@ export const settlement = pgTable(
   ]
 )
 
+export const settlementAllocation = pgTable(
+  "settlement_allocation",
+  {
+    id: text("id").primaryKey(),
+    settlementId: text("settlement_id")
+      .notNull()
+      .references(() => settlement.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "cascade",
+    }),
+    friendLinkId: text("friend_link_id").references(() => friendLink.id, {
+      onDelete: "cascade",
+    }),
+    payerUserId: text("payer_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    payeeUserId: text("payee_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    amountMinor: integer("amount_minor").notNull(),
+    allocationOrder: integer("allocation_order").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("settlement_allocation_settlement_idx").on(table.settlementId),
+    index("settlement_allocation_organization_idx").on(table.organizationId),
+    index("settlement_allocation_friend_link_idx").on(table.friendLinkId),
+    index("settlement_allocation_payer_idx").on(table.payerUserId),
+    index("settlement_allocation_payee_idx").on(table.payeeUserId),
+  ]
+)
+
 export const activityLog = pgTable(
   "activity_log",
   {
@@ -312,6 +344,12 @@ export const userRelations = relations(user, ({ many }) => ({
   settlementsCreated: many(settlement, {
     relationName: "settlement_created_by",
   }),
+  settlementAllocationsPaid: many(settlementAllocation, {
+    relationName: "settlement_allocation_payer",
+  }),
+  settlementAllocationsReceived: many(settlementAllocation, {
+    relationName: "settlement_allocation_payee",
+  }),
   activityLogs: many(activityLog),
 }))
 
@@ -334,6 +372,7 @@ export const organizationRelations = relations(organization, ({ many, one }) => 
   invitations: many(invitation),
   expenses: many(expense),
   settlements: many(settlement),
+  settlementAllocations: many(settlementAllocation),
   activities: many(activityLog),
   settings: one(groupSettings),
 }))
@@ -378,6 +417,7 @@ export const friendLinkRelations = relations(friendLink, ({ one, many }) => ({
   }),
   expenses: many(expense),
   settlements: many(settlement),
+  settlementAllocations: many(settlementAllocation),
   activities: many(activityLog),
 }))
 
@@ -424,7 +464,7 @@ export const expenseParticipantRelations = relations(
   })
 )
 
-export const settlementRelations = relations(settlement, ({ one }) => ({
+export const settlementRelations = relations(settlement, ({ one, many }) => ({
   organization: one(organization, {
     fields: [settlement.organizationId],
     references: [organization.id],
@@ -448,7 +488,36 @@ export const settlementRelations = relations(settlement, ({ one }) => ({
     references: [user.id],
     relationName: "settlement_created_by",
   }),
+  allocations: many(settlementAllocation),
 }))
+
+export const settlementAllocationRelations = relations(
+  settlementAllocation,
+  ({ one }) => ({
+    settlement: one(settlement, {
+      fields: [settlementAllocation.settlementId],
+      references: [settlement.id],
+    }),
+    organization: one(organization, {
+      fields: [settlementAllocation.organizationId],
+      references: [organization.id],
+    }),
+    friendLink: one(friendLink, {
+      fields: [settlementAllocation.friendLinkId],
+      references: [friendLink.id],
+    }),
+    payer: one(user, {
+      fields: [settlementAllocation.payerUserId],
+      references: [user.id],
+      relationName: "settlement_allocation_payer",
+    }),
+    payee: one(user, {
+      fields: [settlementAllocation.payeeUserId],
+      references: [user.id],
+      relationName: "settlement_allocation_payee",
+    }),
+  })
+)
 
 export const activityLogRelations = relations(activityLog, ({ one }) => ({
   organization: one(organization, {

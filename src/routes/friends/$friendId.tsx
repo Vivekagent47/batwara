@@ -30,6 +30,7 @@ export const Route = createFileRoute("/friends/$friendId")({
 
 function FriendDetailsPage() {
   const data = Route.useLoaderData()
+  const params = Route.useParams()
   const getFriendDetailsDataFn = useServerFn(getFriendDetailsData)
   const [expenses, setExpenses] = useState(data.expenses)
   const [hasMoreExpenses, setHasMoreExpenses] = useState(data.hasMore)
@@ -98,12 +99,24 @@ function FriendDetailsPage() {
       title={data.friend.name}
       truncateTitle
       headerActions={
-        <Link
-          to="/friends"
-          className="inline-flex h-10 items-center rounded-xl border border-border bg-background px-3 text-sm hover:bg-muted/55"
-        >
-          Back
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/settle/new"
+            search={{
+              counterpartyUserId: data.friend.id,
+              sourceFriendId: params.friendId,
+            }}
+            className="inline-flex h-10 items-center rounded-xl border border-border bg-background px-3 text-sm hover:bg-muted/55"
+          >
+            Settle up
+          </Link>
+          <Link
+            to="/friends"
+            className="inline-flex h-10 items-center rounded-xl border border-border bg-background px-3 text-sm hover:bg-muted/55"
+          >
+            Back
+          </Link>
+        </div>
       }
     >
       <section className="dashboard-surface">

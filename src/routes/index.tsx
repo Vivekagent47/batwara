@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react"
+import { Component, Suspense, lazy } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   ArrowRight01Icon,
@@ -165,6 +165,29 @@ const LazyDeferredHeroScene = lazy(() =>
     default: mod.DeferredHeroScene,
   }))
 )
+
+class HeroSceneErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("Hero scene failed to render.", error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <HeroSceneFallback />
+    }
+
+    return this.props.children
+  }
+}
 
 export const Route = createFileRoute("/")({
   ssr: true,
@@ -368,9 +391,11 @@ function LandingPage() {
             </div>
 
             <div className="absolute inset-0 rounded-[2rem] border border-white/60 bg-white/30 p-3 shadow-[0_24px_70px_rgba(26,107,60,0.14)]">
-              <Suspense fallback={<HeroSceneFallback />}>
-                <LazyDeferredHeroScene />
-              </Suspense>
+              <HeroSceneErrorBoundary>
+                <Suspense fallback={<HeroSceneFallback />}>
+                  <LazyDeferredHeroScene />
+                </Suspense>
+              </HeroSceneErrorBoundary>
             </div>
 
             <div className="animate-batwara-float absolute right-0 bottom-6 z-10 w-60 rounded-[1.75rem] border border-white/75 bg-[#f7f2e8]/88 p-4 shadow-[0_18px_42px_rgba(28,28,24,0.1)] backdrop-blur">

@@ -167,13 +167,40 @@ function GroupDetailsPage() {
                 key={`${entry.payerUserId}-${entry.payeeUserId}`}
                 className="dashboard-list-item flex items-center justify-between gap-3"
               >
-                <p className="text-sm text-foreground">
-                  <span className="font-medium">{entry.payerName}</span> pays{" "}
-                  <span className="font-medium">{entry.payeeName}</span>
-                </p>
-                <p className="text-sm font-medium">
-                  {formatMoneyMinor(entry.amountMinor)}
-                </p>
+                <div className="min-w-0">
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">{entry.payerName}</span> pays{" "}
+                    <span className="font-medium">{entry.payeeName}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Batwara will settle this pair across their oldest shared
+                    balances first.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">
+                    {formatMoneyMinor(entry.amountMinor)}
+                  </p>
+                  {entry.payerUserId === data.user.id ||
+                  entry.payeeUserId === data.user.id ? (
+                    <Link
+                      to="/settle/new"
+                      search={{
+                        counterpartyUserId:
+                          entry.payerUserId === data.user.id
+                            ? entry.payeeUserId
+                            : entry.payerUserId,
+                        payerUserId: entry.payerUserId,
+                        payeeUserId: entry.payeeUserId,
+                        amountMinor: entry.amountMinor,
+                        sourceGroupId: data.group.id,
+                      }}
+                      className="inline-flex h-9 items-center rounded-xl border border-border bg-background px-3 text-xs font-medium hover:bg-muted/60"
+                    >
+                      Settle
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>

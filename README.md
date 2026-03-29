@@ -6,94 +6,55 @@ Batwara is an open-source expense splitting app for shared life.
 
 Repository: [github.com/Vivekagent47/batwara](https://github.com/Vivekagent47/batwara)
 
-It is being built for people who regularly spend together and need a calmer, clearer way to track shared expenses, understand balances, and settle fairly. That includes trips, shared homes, couples, friend groups, and any small group managing money together.
+Batwara is for people who regularly spend together and need a calmer way to track shared expenses, understand balances, and settle fairly. That includes trips, shared homes, couples, friend groups, and small teams managing money together.
 
-## What Batwara Is
+## Current Product State
 
-Batwara is a product in its early stage.
+Batwara is no longer just a landing page or app shell. This repository already includes the core authenticated product surface.
 
-Right now, this repository contains the public landing page, the design direction, and the application foundation we will build on. The core product experience is not finished yet. There is no full expense workflow yet, no group management flow, and no production-ready backend features in this repository today.
+Implemented today:
 
-That is intentional.
+- Email/password authentication flows
+- Dashboard with net balance summary and recent activity
+- Group creation, group settings, and member management
+- Direct friend ledgers
+- Expense creation, editing, deletion, and activity logging
+- Group balance summaries and settlement suggestions
+- Pairwise settlement flow with automatic allocation across direct and shared-group balances
+- Postgres schema and server-side data access with Drizzle
 
-We are opening the project early so the vision, product direction, interface decisions, and technical foundation can evolve in public. If you join now, you are not arriving after the important decisions have already been made. You can help shape them.
+Still maturing:
 
-## Why We Are Building It
+- Settlement rollout is feature-flagged
+- Automated test coverage is still light
+- Contributor docs and issue templates are incomplete
+- Production hardening, observability, and deployment guidance are still ahead
 
-Shared expenses are common, but the experience around them is often noisy, awkward, or harder than it should be.
+## Settlement Model
 
-People do not just want a calculator. They want confidence. They want to know:
+Batwara records one payment between two people, then automatically applies that payment to the oldest shared balances first.
 
-- who paid
-- who owes what
-- what is fair
-- how to settle with the fewest surprises
+That means a single settlement can reduce:
 
-We are building Batwara to make that experience feel more human.
+- direct friend-ledger balances
+- shared group balances
+- both, when both exist between the same pair
 
-The goal is not only to split bills. The goal is to make shared money feel understandable, transparent, and less stressful.
+To keep the ledger auditable, Batwara stores:
 
-The project is also open source because that matters for this kind of product. Money-related tools benefit from transparency. People should be able to inspect the code, contribute improvements, and understand how the product is evolving.
+- one parent settlement record for the actual payment
+- one or more scoped settlement allocations for the balances that payment reduces
 
-## Project Goals
-
-Batwara is being designed around a few clear goals:
-
-- Make shared expenses easy to understand at a glance.
-- Keep the product calm, clean, and trustworthy instead of noisy or overly financial-looking.
-- Support real group scenarios such as trips, roommates, couples, and recurring shared expenses.
-- Make balances and settlement paths obvious.
-- Build in public with a transparent open-source foundation.
-- Keep the product accessible to contributors from the beginning, not after the architecture is already locked in.
-
-## Current Status
-
-Batwara is just getting started.
-
-What exists today:
-
-- A public landing page with the first Batwara brand and design direction
-- Server-rendered React app foundation using TanStack Start
-- Early SEO, metadata, sitemap, and open-source messaging
-- Early performance and environment toggles for homepage visuals
-
-What does not exist yet:
-
-- Authentication
-- Group creation and member management
-- Expense entry and editing flows
-- Balance summaries and settlements
-- Database and production backend workflows
-- Complete contributor guides and issue templates
-
-This README is written to match the current reality of the repository, not the final vision.
-
-## What We Plan to Build
-
-The product direction is already clear even though the implementation is early.
-
-Planned areas of work include:
-
-- Shared group expense tracking
-- Flexible bill splitting flows
-- Clear group balances and settlement suggestions
-- Better support for recurring shared life scenarios
-- Contributor-friendly open development
-
-The near-term focus is simple: turn the current landing page and app foundation into a real product surface that contributors can build on together.
+Group activity shows only the portion allocated to that group. Direct balance activity shows only the portion allocated to the direct ledger.
 
 ## Quick Start
 
-Batwara currently runs as a Bun-based local development app.
+Batwara runs as a Bun-based local development app.
 
 ### Prerequisites
 
-You should have:
-
-- Bun installed
-- A modern Node-compatible local environment
-
-If you already use Bun, that is enough for the current repo.
+- Bun
+- A local Postgres instance or another reachable Postgres database
 
 ### Install dependencies
 
@@ -103,24 +64,30 @@ bun install
 
 ### Create your local environment file
 
-Copy the example file:
-
 ```bash
 cp .env.example .env
 ```
 
-Current environment variables:
+Important variables:
 
 - `VITE_APP_URL`
-  - Absolute app URL used for canonical URLs, sitemap generation, and metadata
+  Absolute app URL used for canonical URLs, sitemap generation, and metadata.
+- `DATABASE_URL`
+  Postgres connection string used by Drizzle and the app.
+- `BETTER_AUTH_SECRET`
+  Secret used by Better Auth.
+- `BATWARA_ENABLE_SETTLEMENTS`
+  Server-side settlement feature flag.
+- `VITE_ENABLE_SETTLEMENTS`
+  Client-visible settlement feature flag fallback.
 - `VITE_ENABLE_DEVTOOLS`
-  - Enables TanStack devtools locally when set to `true`
+  Enables TanStack devtools locally when set to `true`.
 - `VITE_ENABLE_HERO_SCENE`
-  - Enables the homepage Three.js hero scene
+  Enables the homepage Three.js hero scene.
 - `VITE_ENABLE_HERO_SCENE_ON_MOBILE`
-  - Allows the hero scene to load on mobile devices
+  Allows the hero scene to load on mobile devices.
 
-The default example values are safe for local development.
+The default example values are safe for local development. Settlement stays off unless one of the settlement flags is set to `true`.
 
 ### Start the development server
 
@@ -128,28 +95,26 @@ The default example values are safe for local development.
 bun run dev
 ```
 
-The app runs on:
-
-```text
-http://localhost:3000
-```
+The app runs on `http://localhost:3000`.
 
 ## Available Scripts
 
-Use these commands during local development:
-
 - `bun run dev`
-  - Start the local development server
+  Start the local development server.
 - `bun run build`
-  - Create a production build
+  Create a production build.
 - `bun run preview`
-  - Preview the production build locally
+  Preview the production build locally.
 - `bun run typecheck`
-  - Run TypeScript without emitting files
+  Run TypeScript without emitting files.
 - `bun run lint`
-  - Run ESLint across the project
+  Run ESLint across the project.
 - `bun run test`
-  - Run the current test command
+  Run the current test suite.
+- `bun run db:generate`
+  Generate a Drizzle migration from the schema.
+- `bun run db:migrate`
+  Run database migrations.
 
 ## Tech Stack
 
@@ -160,64 +125,41 @@ Batwara currently uses:
 - TypeScript
 - Vite
 - Tailwind CSS
+- Better Auth
+- Drizzle ORM
+- PostgreSQL
 - Three.js with React Three Fiber for landing-page visuals
-
-This stack will evolve as backend and product features are added, but the current foundation is already set up for a full-stack React application.
 
 ## Contributing
 
-We are opening Batwara early because early contribution is valuable.
+Good contribution areas right now:
 
-If you want to help, this is a good time to join:
+- settlement UX refinement
+- validation and ledger correctness
+- automated tests around balances and activity
+- onboarding and contributor documentation
+- accessibility and mobile polish
 
-- the product direction is still taking shape
-- the architecture is still young
-- the first core features are still ahead of us
-
-Ways to contribute right now:
-
-- improve the landing page
-- refine the design system
-- help shape the product direction
-- improve documentation
-- suggest architecture decisions before implementation hardens
-- prepare the foundation for auth, groups, expenses, and backend features
-
-If you plan to contribute code, start by running the project locally and reading through the current landing page, routes, and supporting docs in the repository.
+If you plan to contribute code, start by running the app locally and reading the routes and server functions under `src/routes` and `src/lib/dashboard-server.ts`.
 
 ## Open Source
 
-Batwara is being built as an open-source project from the beginning.
-
-That is not a branding choice. It is part of the product philosophy.
-
-We want the project to be:
-
-- transparent in how it works
-- open to community contribution
-- easier to trust and inspect
-- capable of growing with public feedback instead of behind closed doors
+Batwara is open source because money-related tools benefit from transparency. People should be able to inspect the code, understand the rules, and improve the product in public.
 
 Public repository:
 
 - [https://github.com/Vivekagent47/batwara](https://github.com/Vivekagent47/batwara)
 
-The repository is public now. The current codebase is early, but that is exactly why this is a useful time to publish it.
-
 ## License
 
-A project license has not been added to the repository yet.
+A project license has not been added yet. This repository should include a proper `LICENSE` file before wider public distribution.
 
-This repo should include a proper `LICENSE` file so contributors and users know exactly how Batwara can be used, modified, and shared.
+## Near-Term Roadmap
 
-## Roadmap
-
-Near-term priorities:
-
-1. Stabilize the public project foundation
-2. Improve documentation and contributor onboarding
-3. Add the first real product flows
-4. Introduce backend and data-layer building blocks
+1. Harden settlement rollout and validation
+2. Expand automated coverage for ledger math and activity
+3. Improve contributor onboarding and operational docs
+4. Continue polishing group, friend, and expense flows for production readiness
 5. Start shaping Batwara into a usable open-source expense sharing product
 
 ## Repository Note

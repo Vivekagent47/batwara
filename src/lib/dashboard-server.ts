@@ -3,6 +3,11 @@ import { redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { getRequest } from "@tanstack/react-start/server"
 
+import type {
+  PairwiseDebtRow,
+  SettlementImpactRow,
+  SettlementScopeType,
+} from "@/lib/settlement-ledger"
 import { db } from "@/db"
 import {
   activityLog,
@@ -14,6 +19,7 @@ import {
   member,
   organization,
   settlement,
+  settlementAllocation,
   user,
 } from "@/db/schema"
 import { auth } from "@/lib/auth"
@@ -23,6 +29,7 @@ import {
   settlementsEnabled,
 } from "@/lib/feature-flags-server"
 import { enforceRateLimit } from "@/lib/rate-limit"
+import { buildPairwiseSettlementPlan } from "@/lib/settlement-ledger"
 
 export type LedgerContextType = "group" | "friend"
 export type ExpenseSplitMethod = "equal" | "exact" | "percentage" | "shares"
@@ -105,10 +112,19 @@ type ContextMember = {
   email: string
 }
 
+type SettlementCounterparty = {
+  id: string
+  name: string
+  email: string
+  isFriend: boolean
+  sharedGroupCount: number
+}
+
 type UserLookup = Map<string, LedgerUser>
 
 const GROUP_EXPENSE_PAGE_SIZE = 15
 const FRIEND_EXPENSE_PAGE_SIZE = 20
+const SETTLEMENT_ALLOCATION_TABLE = "settlement_allocation"
 
 function safeDate(value: Date | null | undefined) {
   return value ?? new Date()
@@ -129,6 +145,37 @@ function toMinorUnits(value: number) {
 function normalizePairKey(userAId: string, userBId: string) {
   const [a, b] = [userAId, userBId].sort()
   return `${a}:${b}`
+}
+
+function isMissingSettlementAllocationTableError(error: unknown): boolean {
+  const queue: Array<unknown> = [error]
+
+  while (queue.length > 0) {
+    const current = queue.shift()
+    if (!current || typeof current !== "object") {
+      continue
+    }
+
+    const currentRecord = current as Record<string, unknown>
+    if (currentRecord.code === "42P01") {
+      return true
+    }
+
+    const message =
+      typeof currentRecord.message === "string" ? currentRecord.message : ""
+    if (
+      message.includes(SETTLEMENT_ALLOCATION_TABLE) &&
+      (message.includes("does not exist") || message.includes("Failed query"))
+    ) {
+      return true
+    }
+
+    if ("cause" in currentRecord) {
+      queue.push(currentRecord.cause)
+    }
+  }
+
+  return false
 }
 
 function createSlug(name: string) {
@@ -345,6 +392,363 @@ async function getUserLookup(userIds: Array<string>) {
   return new Map(rows.map((entry) => [entry.id, entry])) as UserLookup
 }
 
+async function getActiveFriendLinkBetweenUsers(
+  userAId: string,
+  userBId: string
+) {
+  const rows = await db
+    .select({
+      id: friendLink.id,
+      userAId: friendLink.userAId,
+      userBId: friendLink.userBId,
+      status: friendLink.status,
+    })
+    .from(friendLink)
+    .where(
+      and(
+        eq(friendLink.pairKey, normalizePairKey(userAId, userBId)),
+        eq(friendLink.status, "active")
+      )
+    )
+    .limit(1)
+
+  return rows.at(0) ?? null
+}
+
+async function getScopedSettlementImpactRows(args: {
+  groupIds?: Array<string>
+  friendLinkIds?: Array<string>
+}) {
+  type ScopedImpactSourceRow = {
+    organizationId: string | null
+    friendLinkId: string | null
+    payerUserId: string
+    payeeUserId: string
+    amountMinor: number
+  }
+
+  const groupIds = Array.from(new Set(args.groupIds ?? []))
+  const friendLinkIds = Array.from(new Set(args.friendLinkIds ?? []))
+  const scopeClauses = []
+
+  if (groupIds.length > 0) {
+    scopeClauses.push(inArray(settlementAllocation.organizationId, groupIds))
+  }
+
+  if (friendLinkIds.length > 0) {
+    scopeClauses.push(inArray(settlementAllocation.friendLinkId, friendLinkIds))
+  }
+
+  const legacyScopeClauses = []
+  if (groupIds.length > 0) {
+    legacyScopeClauses.push(inArray(settlement.organizationId, groupIds))
+  }
+
+  if (friendLinkIds.length > 0) {
+    legacyScopeClauses.push(inArray(settlement.friendLinkId, friendLinkIds))
+  }
+
+  if (scopeClauses.length === 0 && legacyScopeClauses.length === 0) {
+    return [] as Array<SettlementImpactRow>
+  }
+
+  const legacyRows: Array<ScopedImpactSourceRow> =
+    legacyScopeClauses.length === 0
+      ? []
+      : await db
+          .select({
+            organizationId: settlement.organizationId,
+            friendLinkId: settlement.friendLinkId,
+            payerUserId: settlement.payerUserId,
+            payeeUserId: settlement.payeeUserId,
+            amountMinor: settlement.amountMinor,
+          })
+          .from(settlement)
+          .where(
+            legacyScopeClauses.length === 1
+              ? legacyScopeClauses[0]
+              : or(...legacyScopeClauses)
+          )
+
+  let allocationRows: Array<ScopedImpactSourceRow> = []
+  if (scopeClauses.length > 0) {
+    try {
+      allocationRows = await db
+        .select({
+          organizationId: settlementAllocation.organizationId,
+          friendLinkId: settlementAllocation.friendLinkId,
+          payerUserId: settlementAllocation.payerUserId,
+          payeeUserId: settlementAllocation.payeeUserId,
+          amountMinor: settlementAllocation.amountMinor,
+        })
+        .from(settlementAllocation)
+        .where(
+          scopeClauses.length === 1 ? scopeClauses[0] : or(...scopeClauses)
+        )
+    } catch (error) {
+      if (!isMissingSettlementAllocationTableError(error)) {
+        throw error
+      }
+    }
+  }
+
+  const impactRows: Array<SettlementImpactRow> = []
+  for (const row of [...allocationRows, ...legacyRows]) {
+    if (row.organizationId) {
+      impactRows.push({
+        scopeType: "group",
+        scopeId: row.organizationId,
+        payerUserId: row.payerUserId,
+        payeeUserId: row.payeeUserId,
+        amountMinor: row.amountMinor,
+      })
+      continue
+    }
+
+    if (row.friendLinkId) {
+      impactRows.push({
+        scopeType: "friend",
+        scopeId: row.friendLinkId,
+        payerUserId: row.payerUserId,
+        payeeUserId: row.payeeUserId,
+        amountMinor: row.amountMinor,
+      })
+    }
+  }
+
+  return impactRows
+}
+
+async function getSettlementCounterparties(userId: string) {
+  const [friends, groupRows] = await Promise.all([
+    getUserFriends(userId),
+    db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .where(eq(member.userId, userId)),
+  ])
+
+  const groupIds = Array.from(
+    new Set(groupRows.map((entry) => entry.organizationId))
+  )
+  const groupMemberRows =
+    groupIds.length === 0
+      ? []
+      : await db
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            organizationId: member.organizationId,
+          })
+          .from(member)
+          .innerJoin(user, eq(member.userId, user.id))
+          .where(inArray(member.organizationId, groupIds))
+
+  const sharedGroupCountByUserId = new Map<string, number>()
+  for (const row of groupMemberRows) {
+    if (row.id === userId) {
+      continue
+    }
+
+    sharedGroupCountByUserId.set(
+      row.id,
+      (sharedGroupCountByUserId.get(row.id) ?? 0) + 1
+    )
+  }
+
+  const counterparties = new Map<string, SettlementCounterparty>()
+
+  for (const friend of friends) {
+    counterparties.set(friend.otherUser.id, {
+      id: friend.otherUser.id,
+      name: friend.otherUser.name,
+      email: friend.otherUser.email,
+      isFriend: true,
+      sharedGroupCount: sharedGroupCountByUserId.get(friend.otherUser.id) ?? 0,
+    })
+  }
+
+  for (const row of groupMemberRows) {
+    if (row.id === userId) {
+      continue
+    }
+
+    const current = counterparties.get(row.id)
+    counterparties.set(row.id, {
+      id: row.id,
+      name: current?.name ?? row.name,
+      email: current?.email ?? row.email,
+      isFriend: current?.isFriend ?? false,
+      sharedGroupCount: sharedGroupCountByUserId.get(row.id) ?? 0,
+    })
+  }
+
+  return Array.from(counterparties.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
+}
+
+async function getPairwiseSettlementContext(
+  userId: string,
+  counterpartyUserId: string
+) {
+  const [userLookup, activeFriendLink, sharedGroupIds] = await Promise.all([
+    getUserLookup([counterpartyUserId]),
+    getActiveFriendLinkBetweenUsers(userId, counterpartyUserId),
+    getSharedGroupIdsBetweenUsers(userId, counterpartyUserId),
+  ])
+
+  const counterparty = userLookup.get(counterpartyUserId)
+  if (!counterparty) {
+    throw new Error("Counterparty is unavailable.")
+  }
+
+  if (!activeFriendLink && sharedGroupIds.length === 0) {
+    throw new Error("You do not share any accessible balance with this user.")
+  }
+
+  const expenseScopeClauses = []
+  if (activeFriendLink) {
+    expenseScopeClauses.push(eq(expense.friendLinkId, activeFriendLink.id))
+  }
+
+  if (sharedGroupIds.length > 0) {
+    expenseScopeClauses.push(inArray(expense.organizationId, sharedGroupIds))
+  }
+
+  const expenseRows =
+    expenseScopeClauses.length === 0
+      ? []
+      : await db
+          .select({
+            id: expense.id,
+            organizationId: expense.organizationId,
+            friendLinkId: expense.friendLinkId,
+            organizationName: organization.name,
+            incurredAt: expense.incurredAt,
+            paidByUserId: expense.paidByUserId,
+            participantUserId: expenseParticipant.userId,
+            owedAmountMinor: expenseParticipant.owedAmountMinor,
+          })
+          .from(expenseParticipant)
+          .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
+          .leftJoin(organization, eq(expense.organizationId, organization.id))
+          .where(
+            and(
+              gt(expenseParticipant.owedAmountMinor, 0),
+              expenseScopeClauses.length === 1
+                ? expenseScopeClauses[0]
+                : or(...expenseScopeClauses),
+              inArray(expense.paidByUserId, [userId, counterpartyUserId]),
+              inArray(expenseParticipant.userId, [userId, counterpartyUserId])
+            )
+          )
+
+  const debtRows: Array<PairwiseDebtRow> = []
+  for (const row of expenseRows) {
+    if (row.participantUserId === row.paidByUserId) {
+      continue
+    }
+
+    const scopeType: SettlementScopeType = row.organizationId
+      ? "group"
+      : "friend"
+    const scopeId = row.organizationId ?? row.friendLinkId
+    if (!scopeId) {
+      continue
+    }
+
+    debtRows.push({
+      scopeType,
+      scopeId,
+      scopeName: row.organizationId
+        ? (row.organizationName ?? "Group")
+        : "Direct",
+      creditorUserId: row.paidByUserId,
+      debtorUserId: row.participantUserId,
+      amountMinor: row.owedAmountMinor,
+      incurredAt: safeDate(row.incurredAt),
+      expenseId: row.id,
+    })
+  }
+
+  const settlementImpactRows = (
+    await getScopedSettlementImpactRows({
+      groupIds: sharedGroupIds,
+      friendLinkIds: activeFriendLink ? [activeFriendLink.id] : [],
+    })
+  ).filter(
+    (row) =>
+      (row.payerUserId === userId || row.payerUserId === counterpartyUserId) &&
+      (row.payeeUserId === userId || row.payeeUserId === counterpartyUserId)
+  )
+
+  return {
+    counterparty,
+    activeFriendLink,
+    sharedGroupIds,
+    debtRows,
+    settlementImpactRows,
+  }
+}
+
+async function preparePairwiseSettlementPlan(args: {
+  currentUserId: string
+  counterpartyUserId: string
+  payerUserId: string
+  payeeUserId: string
+  amountMinor: number
+}) {
+  const counterpartyUserId = args.counterpartyUserId.trim()
+  if (!counterpartyUserId) {
+    throw new Error("Choose who this settlement is with.")
+  }
+
+  if (counterpartyUserId === args.currentUserId) {
+    throw new Error("Choose another user to settle with.")
+  }
+
+  if (args.payerUserId === args.payeeUserId) {
+    throw new Error("Payer and payee must be different.")
+  }
+
+  const allowedUserIds = new Set([args.currentUserId, counterpartyUserId])
+  if (
+    !allowedUserIds.has(args.payerUserId) ||
+    !allowedUserIds.has(args.payeeUserId)
+  ) {
+    throw new Error(
+      "Settlement users must match you and the selected counterparty."
+    )
+  }
+
+  const amountMinor = toMinorUnits(args.amountMinor)
+  if (amountMinor <= 0) {
+    throw new Error("Settlement amount must be more than zero.")
+  }
+
+  const context = await getPairwiseSettlementContext(
+    args.currentUserId,
+    counterpartyUserId
+  )
+  const plan = buildPairwiseSettlementPlan({
+    debtRows: context.debtRows,
+    settlementImpactRows: context.settlementImpactRows,
+    payerUserId: args.payerUserId,
+    payeeUserId: args.payeeUserId,
+    amountMinor,
+  })
+
+  return {
+    amountMinor,
+    counterparty: context.counterparty,
+    activeFriendLink: context.activeFriendLink,
+    allocations: plan.allocations,
+    outstandingTotal: plan.outstandingTotal,
+  }
+}
+
 async function getGroupNetByUser(userId: string, groupIds: Array<string>) {
   if (groupIds.length === 0) {
     return new Map<string, number>()
@@ -369,20 +773,7 @@ async function getGroupNetByUser(userId: string, groupIds: Array<string>) {
           )
         )
       ),
-    db
-      .select({
-        organizationId: settlement.organizationId,
-        payerUserId: settlement.payerUserId,
-        payeeUserId: settlement.payeeUserId,
-        amountMinor: settlement.amountMinor,
-      })
-      .from(settlement)
-      .where(
-        and(
-          inArray(settlement.organizationId, groupIds),
-          or(eq(settlement.payerUserId, userId), eq(settlement.payeeUserId, userId))
-        )
-      ),
+    getScopedSettlementImpactRows({ groupIds }),
   ])
 
   const groupNetMap = new Map<string, number>()
@@ -406,11 +797,11 @@ async function getGroupNetByUser(userId: string, groupIds: Array<string>) {
   }
 
   for (const row of settlementRows) {
-    if (!row.organizationId) {
+    if (row.scopeType !== "group") {
       continue
     }
 
-    let net = groupNetMap.get(row.organizationId) ?? 0
+    let net = groupNetMap.get(row.scopeId) ?? 0
 
     if (row.payerUserId === userId) {
       net += row.amountMinor
@@ -420,7 +811,7 @@ async function getGroupNetByUser(userId: string, groupIds: Array<string>) {
       net -= row.amountMinor
     }
 
-    groupNetMap.set(row.organizationId, net)
+    groupNetMap.set(row.scopeId, net)
   }
 
   return groupNetMap
@@ -553,7 +944,9 @@ async function getSharedGroupIdsBetweenUsers(userAId: string, userBId: string) {
       )
     )
 
-  return Array.from(new Set(sharedGroupRows.map((entry) => entry.organizationId)))
+  return Array.from(
+    new Set(sharedGroupRows.map((entry) => entry.organizationId))
+  )
 }
 
 async function assertGroupAccess(userId: string, groupId: string) {
@@ -768,7 +1161,10 @@ async function attachExpenseActivityImpacts(
     .from(expenseParticipant)
     .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
     .where(
-      and(eq(expenseParticipant.userId, userId), inArray(expense.id, expenseIds))
+      and(
+        eq(expenseParticipant.userId, userId),
+        inArray(expense.id, expenseIds)
+      )
     )
 
   const impactMap = new Map<
@@ -858,15 +1254,12 @@ async function getPairwiseSummary(
   friendIds: Array<string>
 ) {
   const expenseScopeClauses = []
-  const settlementScopeClauses = []
   if (groupIds.length > 0) {
     expenseScopeClauses.push(inArray(expense.organizationId, groupIds))
-    settlementScopeClauses.push(inArray(settlement.organizationId, groupIds))
   }
 
   if (friendIds.length > 0) {
     expenseScopeClauses.push(inArray(expense.friendLinkId, friendIds))
-    settlementScopeClauses.push(inArray(settlement.friendLinkId, friendIds))
   }
 
   if (expenseScopeClauses.length === 0) {
@@ -899,18 +1292,10 @@ async function getPairwiseSummary(
         : or(...expenseScopeClauses)
     )
 
-  const settlementRows = await db
-    .select({
-      payerUserId: settlement.payerUserId,
-      payeeUserId: settlement.payeeUserId,
-      amountMinor: settlement.amountMinor,
-    })
-    .from(settlement)
-    .where(
-      settlementScopeClauses.length === 1
-        ? settlementScopeClauses[0]
-        : or(...settlementScopeClauses)
-    )
+  const settlementRows = await getScopedSettlementImpactRows({
+    groupIds,
+    friendLinkIds: friendIds,
+  })
 
   const pairMap = new Map<string, number>()
 
@@ -1167,45 +1552,37 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
       recentExpenseRows,
       friends,
       activity,
-    ] =
-      await Promise.all([
-        getGroupMembers(data.groupId),
-        db
-          .select({
-            paidByUserId: expense.paidByUserId,
-            participantUserId: expenseParticipant.userId,
-            owedAmountMinor: expenseParticipant.owedAmountMinor,
-          })
-          .from(expenseParticipant)
-          .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
-          .where(eq(expense.organizationId, data.groupId)),
-        db
-          .select({
-            payerUserId: settlement.payerUserId,
-            payeeUserId: settlement.payeeUserId,
-            amountMinor: settlement.amountMinor,
-          })
-          .from(settlement)
-          .where(eq(settlement.organizationId, data.groupId)),
-        db
-          .select({
-            id: expense.id,
-            title: expense.title,
-            totalAmountMinor: expense.totalAmountMinor,
-            currency: expense.currency,
-            splitMethod: expense.splitMethod,
-            incurredAt: expense.incurredAt,
-            paidByUserId: expense.paidByUserId,
-            paidByName: user.name,
-          })
-          .from(expense)
-          .innerJoin(user, eq(expense.paidByUserId, user.id))
-          .where(eq(expense.organizationId, data.groupId))
-          .orderBy(desc(expense.incurredAt), desc(expense.id))
-          .limit(GROUP_EXPENSE_PAGE_SIZE + 1),
-        getUserFriends(currentUser.id),
-        getAccessibleActivities([data.groupId], [], 24),
-      ])
+    ] = await Promise.all([
+      getGroupMembers(data.groupId),
+      db
+        .select({
+          paidByUserId: expense.paidByUserId,
+          participantUserId: expenseParticipant.userId,
+          owedAmountMinor: expenseParticipant.owedAmountMinor,
+        })
+        .from(expenseParticipant)
+        .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
+        .where(eq(expense.organizationId, data.groupId)),
+      getScopedSettlementImpactRows({ groupIds: [data.groupId] }),
+      db
+        .select({
+          id: expense.id,
+          title: expense.title,
+          totalAmountMinor: expense.totalAmountMinor,
+          currency: expense.currency,
+          splitMethod: expense.splitMethod,
+          incurredAt: expense.incurredAt,
+          paidByUserId: expense.paidByUserId,
+          paidByName: user.name,
+        })
+        .from(expense)
+        .innerJoin(user, eq(expense.paidByUserId, user.id))
+        .where(eq(expense.organizationId, data.groupId))
+        .orderBy(desc(expense.incurredAt), desc(expense.id))
+        .limit(GROUP_EXPENSE_PAGE_SIZE + 1),
+      getUserFriends(currentUser.id),
+      getAccessibleActivities([data.groupId], [], 24),
+    ])
 
     const net = buildNetMap(expenseRows, settlementRows)
     const transfers = simplifyNetBalances(net)
@@ -1246,6 +1623,7 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
     }))
 
     return {
+      user: currentUser,
       group,
       viewerRole: getPrimaryMemberRole(membership.role),
       canManageMembers: canManageGroupMembers(membership.role),
@@ -1422,7 +1800,10 @@ export const leaveGroup = createServerFn({ method: "POST" })
         .select({ role: member.role })
         .from(member)
         .where(
-          and(eq(member.organizationId, groupId), eq(member.userId, currentUser.id))
+          and(
+            eq(member.organizationId, groupId),
+            eq(member.userId, currentUser.id)
+          )
         )
         .limit(1),
       db
@@ -1663,12 +2044,17 @@ export const getFriendDetailsData = createServerFn({ method: "GET" })
         counterpartOwedMinor: 0,
       }
 
-      if (entry.paidByUserId === currentUser.id && owed.counterpartOwedMinor > 0) {
+      if (
+        entry.paidByUserId === currentUser.id &&
+        owed.counterpartOwedMinor > 0
+      ) {
         expenses.push({
           ...entry,
           incurredAt: safeDate(entry.incurredAt),
           contextType: entry.organizationId ? "group" : "direct",
-          contextName: entry.organizationId ? (entry.organizationName ?? "Group") : "Direct",
+          contextName: entry.organizationId
+            ? (entry.organizationName ?? "Group")
+            : "Direct",
           pairImpact: {
             direction: "collect",
             amountMinor: owed.counterpartOwedMinor,
@@ -1677,12 +2063,17 @@ export const getFriendDetailsData = createServerFn({ method: "GET" })
         continue
       }
 
-      if (entry.paidByUserId === counterpart.id && owed.currentUserOwedMinor > 0) {
+      if (
+        entry.paidByUserId === counterpart.id &&
+        owed.currentUserOwedMinor > 0
+      ) {
         expenses.push({
           ...entry,
           incurredAt: safeDate(entry.incurredAt),
           contextType: entry.organizationId ? "group" : "direct",
-          contextName: entry.organizationId ? (entry.organizationName ?? "Group") : "Direct",
+          contextName: entry.organizationId
+            ? (entry.organizationName ?? "Group")
+            : "Direct",
           pairImpact: {
             direction: "pay",
             amountMinor: owed.currentUserOwedMinor,
@@ -1803,6 +2194,75 @@ export const getLedgerMembers = createServerFn({ method: "GET" })
     const { members } = await getFriendContextForUser(currentUser.id, contextId)
     return {
       members,
+    }
+  })
+
+export const getSettlementComposerData = createServerFn({
+  method: "GET",
+}).handler(async () => {
+  if (!settlementsEnabled) {
+    throw new Error(settlementsDisabledMessage)
+  }
+
+  const currentUser = await requireLedgerUser()
+  enforceRateLimit({
+    key: `settlement-composer:${currentUser.id}`,
+    windowMs: 60_000,
+    max: 120,
+  })
+
+  const [groups, friends, counterparties] = await Promise.all([
+    getUserGroups(currentUser.id),
+    getUserFriends(currentUser.id),
+    getSettlementCounterparties(currentUser.id),
+  ])
+
+  const summary = await getPairwiseSummary(
+    currentUser.id,
+    groups.map((entry) => entry.id),
+    friends.map((entry) => entry.id)
+  )
+
+  return {
+    user: currentUser,
+    counterparties,
+    suggestions: summary.suggestions.slice(0, 8),
+  }
+})
+
+export const previewSettlement = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      counterpartyUserId: string
+      payerUserId: string
+      payeeUserId: string
+      amountMinor: number
+    }) => input
+  )
+  .handler(async ({ data }) => {
+    if (!settlementsEnabled) {
+      throw new Error(settlementsDisabledMessage)
+    }
+
+    const currentUser = await requireLedgerUser()
+    enforceRateLimit({
+      key: `preview-settlement:${currentUser.id}`,
+      windowMs: 60_000,
+      max: 80,
+    })
+
+    const plan = await preparePairwiseSettlementPlan({
+      currentUserId: currentUser.id,
+      counterpartyUserId: data.counterpartyUserId,
+      payerUserId: data.payerUserId,
+      payeeUserId: data.payeeUserId,
+      amountMinor: data.amountMinor,
+    })
+
+    return {
+      counterparty: plan.counterparty,
+      outstandingTotal: plan.outstandingTotal,
+      allocations: plan.allocations,
     }
   })
 
@@ -2171,7 +2631,8 @@ export const createExpense = createServerFn({ method: "POST" })
       await assertGroupAccess(currentUser.id, contextId)
       members = await getGroupMembers(contextId)
     } else {
-      members = (await getFriendContextForUser(currentUser.id, contextId)).members
+      members = (await getFriendContextForUser(currentUser.id, contextId))
+        .members
     }
     const memberIds = new Set(members.map((entry) => entry.id))
 
@@ -2442,11 +2903,28 @@ export const deleteExpense = createServerFn({ method: "POST" })
     }
   })
 
+function parseSettlementDateInput(value: string | undefined) {
+  if (!value) {
+    return null
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error("Settlement date is invalid.")
+  }
+
+  // Persist day-only inputs at midday to avoid timezone rollovers.
+  const parsed = new Date(`${value}T12:00:00`)
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Settlement date is invalid.")
+  }
+
+  return parsed
+}
+
 export const createSettlement = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
-      contextType: LedgerContextType
-      contextId: string
+      counterpartyUserId: string
       payerUserId: string
       payeeUserId: string
       amountMinor: number
@@ -2467,66 +2945,88 @@ export const createSettlement = createServerFn({ method: "POST" })
       max: 35,
     })
 
-    if (data.payerUserId === data.payeeUserId) {
-      throw new Error("Payer and payee must be different.")
-    }
-
-    let members: Array<ContextMember>
-    if (data.contextType === "group") {
-      await assertGroupAccess(currentUser.id, data.contextId)
-      members = await getGroupMembers(data.contextId)
-    } else {
-      members = (
-        await getFriendContextForUser(currentUser.id, data.contextId)
-      ).members
-    }
-    const memberIds = new Set(members.map((entry) => entry.id))
-
-    if (!memberIds.has(data.payerUserId) || !memberIds.has(data.payeeUserId)) {
-      throw new Error("Settlement users must belong to the selected ledger.")
-    }
-
-    const amountMinor = toMinorUnits(data.amountMinor)
-    if (amountMinor <= 0) {
-      throw new Error("Settlement amount must be more than zero.")
-    }
-
-    const settlementId = crypto.randomUUID()
-    const now = new Date()
-
-    await db.transaction(async (tx) => {
-      await tx.insert(settlement).values({
-        id: settlementId,
-        organizationId: data.contextType === "group" ? data.contextId : null,
-        friendLinkId: data.contextType === "friend" ? data.contextId : null,
-        payerUserId: data.payerUserId,
-        payeeUserId: data.payeeUserId,
-        currency: toCurrencyCode(data.currency),
-        amountMinor,
-        note: data.note?.trim() || null,
-        settledAt: data.settledAt ? new Date(data.settledAt) : now,
-        createdByUserId: currentUser.id,
-        createdAt: now,
-      })
-
-      await tx.insert(activityLog).values({
-        id: crypto.randomUUID(),
-        organizationId: data.contextType === "group" ? data.contextId : null,
-        friendLinkId: data.contextType === "friend" ? data.contextId : null,
-        actorUserId: currentUser.id,
-        entityType: "settlement",
-        entityId: settlementId,
-        action: "created",
-        summary: `${currentUser.name} recorded a settlement.`,
-        metadata: JSON.stringify({
-          amountMinor,
-          currency: toCurrencyCode(data.currency),
-        }),
-        createdAt: now,
-      })
+    const plan = await preparePairwiseSettlementPlan({
+      currentUserId: currentUser.id,
+      counterpartyUserId: data.counterpartyUserId,
+      payerUserId: data.payerUserId,
+      payeeUserId: data.payeeUserId,
+      amountMinor: data.amountMinor,
     })
 
+    try {
+      await db.transaction(async (tx) => {
+        const settlementId = crypto.randomUUID()
+        const now = new Date()
+        const normalizedCurrency = toCurrencyCode(data.currency)
+        const normalizedSettledAt =
+          parseSettlementDateInput(data.settledAt) ?? now
+
+        await tx.insert(settlement).values({
+          id: settlementId,
+          payerUserId: data.payerUserId,
+          payeeUserId: data.payeeUserId,
+          currency: normalizedCurrency,
+          amountMinor: plan.amountMinor,
+          note: data.note?.trim() || null,
+          settledAt: normalizedSettledAt,
+          createdByUserId: currentUser.id,
+          createdAt: now,
+        })
+
+        await tx.insert(settlementAllocation).values(
+          plan.allocations.map((entry) => ({
+            id: crypto.randomUUID(),
+            settlementId,
+            organizationId: entry.scopeType === "group" ? entry.scopeId : null,
+            friendLinkId: entry.scopeType === "friend" ? entry.scopeId : null,
+            payerUserId: data.payerUserId,
+            payeeUserId: data.payeeUserId,
+            amountMinor: entry.amountMinor,
+            allocationOrder: entry.allocationOrder,
+            createdAt: now,
+          }))
+        )
+
+        await tx.insert(activityLog).values(
+          plan.allocations.map((entry) => ({
+            id: crypto.randomUUID(),
+            organizationId: entry.scopeType === "group" ? entry.scopeId : null,
+            friendLinkId: entry.scopeType === "friend" ? entry.scopeId : null,
+            actorUserId: currentUser.id,
+            entityType: "settlement",
+            entityId: settlementId,
+            action: "created",
+            summary:
+              entry.scopeType === "group"
+                ? `${currentUser.name} recorded a ${entry.scopeName} settlement.`
+                : `${currentUser.name} recorded a direct settlement with ${plan.counterparty.name}.`,
+            metadata: JSON.stringify({
+              payerUserId: data.payerUserId,
+              payeeUserId: data.payeeUserId,
+              counterpartyUserId: plan.counterparty.id,
+              amountMinor: plan.amountMinor,
+              allocatedAmountMinor: entry.amountMinor,
+              allocationOrder: entry.allocationOrder,
+              currency: normalizedCurrency,
+              scopeType: entry.scopeType,
+              scopeName: entry.scopeName,
+            }),
+            createdAt: now,
+          }))
+        )
+      })
+    } catch (error) {
+      if (isMissingSettlementAllocationTableError(error)) {
+        throw new Error(
+          'Database migration missing for settlements. Run "bun run db:migrate" and try again.'
+        )
+      }
+
+      throw error
+    }
+
     return {
-      settlementId,
+      amountMinor: plan.amountMinor,
+      allocations: plan.allocations,
     }
   })

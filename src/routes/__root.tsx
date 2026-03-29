@@ -60,6 +60,42 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 })
 
+function getErrorMessage(error: unknown): string {
+  const queue: Array<unknown> = [error]
+
+  while (queue.length > 0) {
+    const current = queue.shift()
+
+    if (current instanceof Error && current.message) {
+      return current.message
+    }
+
+    if (!current || typeof current !== "object") {
+      continue
+    }
+
+    const currentRecord = current as Record<string, unknown>
+
+    if (typeof currentRecord.message === "string" && currentRecord.message) {
+      return currentRecord.message
+    }
+
+    if ("cause" in currentRecord) {
+      queue.push(currentRecord.cause)
+    }
+
+    if ("data" in currentRecord) {
+      queue.push(currentRecord.data)
+    }
+
+    if ("error" in currentRecord) {
+      queue.push(currentRecord.error)
+    }
+  }
+
+  return "Unexpected application error."
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -81,8 +117,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootErrorComponent({ error }: { error: unknown }) {
-  const message =
-    error instanceof Error ? error.message : "Unexpected application error."
+  const message = getErrorMessage(error)
 
   return (
     <main className="relative min-h-svh px-4 py-10 sm:px-6">

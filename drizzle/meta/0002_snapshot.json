@@ -1,0 +1,1844 @@
+{
+  "id": "0184e42c-e75c-449d-96b5-e0c7e4885c19",
+  "prevId": "437143d0-587a-4e5d-9191-f255e8526e0a",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.account": {
+      "name": "account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "account_userId_idx": {
+          "name": "account_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.activity_log": {
+      "name": "activity_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "friend_link_id": {
+          "name": "friend_link_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "activity_log_org_idx": {
+          "name": "activity_log_org_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "activity_log_friend_idx": {
+          "name": "activity_log_friend_idx",
+          "columns": [
+            {
+              "expression": "friend_link_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "activity_log_actor_idx": {
+          "name": "activity_log_actor_idx",
+          "columns": [
+            {
+              "expression": "actor_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "activity_log_created_at_idx": {
+          "name": "activity_log_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "activity_log_organization_id_organization_id_fk": {
+          "name": "activity_log_organization_id_organization_id_fk",
+          "tableFrom": "activity_log",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "activity_log_friend_link_id_friend_link_id_fk": {
+          "name": "activity_log_friend_link_id_friend_link_id_fk",
+          "tableFrom": "activity_log",
+          "tableTo": "friend_link",
+          "columnsFrom": [
+            "friend_link_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "activity_log_actor_user_id_user_id_fk": {
+          "name": "activity_log_actor_user_id_user_id_fk",
+          "tableFrom": "activity_log",
+          "tableTo": "user",
+          "columnsFrom": [
+            "actor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.expense": {
+      "name": "expense",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "friend_link_id": {
+          "name": "friend_link_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paid_by_user_id": {
+          "name": "paid_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INR'"
+        },
+        "total_amount_minor": {
+          "name": "total_amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "split_method": {
+          "name": "split_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "split_meta": {
+          "name": "split_meta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "incurred_at": {
+          "name": "incurred_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "expense_organization_idx": {
+          "name": "expense_organization_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_friend_link_idx": {
+          "name": "expense_friend_link_idx",
+          "columns": [
+            {
+              "expression": "friend_link_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_incurred_at_idx": {
+          "name": "expense_incurred_at_idx",
+          "columns": [
+            {
+              "expression": "incurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_paid_by_idx": {
+          "name": "expense_paid_by_idx",
+          "columns": [
+            {
+              "expression": "paid_by_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "expense_organization_id_organization_id_fk": {
+          "name": "expense_organization_id_organization_id_fk",
+          "tableFrom": "expense",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "expense_friend_link_id_friend_link_id_fk": {
+          "name": "expense_friend_link_id_friend_link_id_fk",
+          "tableFrom": "expense",
+          "tableTo": "friend_link",
+          "columnsFrom": [
+            "friend_link_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "expense_created_by_user_id_user_id_fk": {
+          "name": "expense_created_by_user_id_user_id_fk",
+          "tableFrom": "expense",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "expense_paid_by_user_id_user_id_fk": {
+          "name": "expense_paid_by_user_id_user_id_fk",
+          "tableFrom": "expense",
+          "tableTo": "user",
+          "columnsFrom": [
+            "paid_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.expense_participant": {
+      "name": "expense_participant",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expense_id": {
+          "name": "expense_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paid_amount_minor": {
+          "name": "paid_amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "owed_amount_minor": {
+          "name": "owed_amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "expense_participant_expense_user_uidx": {
+          "name": "expense_participant_expense_user_uidx",
+          "columns": [
+            {
+              "expression": "expense_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_participant_expense_idx": {
+          "name": "expense_participant_expense_idx",
+          "columns": [
+            {
+              "expression": "expense_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_participant_user_idx": {
+          "name": "expense_participant_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "expense_participant_expense_id_expense_id_fk": {
+          "name": "expense_participant_expense_id_expense_id_fk",
+          "tableFrom": "expense_participant",
+          "tableTo": "expense",
+          "columnsFrom": [
+            "expense_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "expense_participant_user_id_user_id_fk": {
+          "name": "expense_participant_user_id_user_id_fk",
+          "tableFrom": "expense_participant",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.friend_link": {
+      "name": "friend_link",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "pair_key": {
+          "name": "pair_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_a_id": {
+          "name": "user_a_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_b_id": {
+          "name": "user_b_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "friend_link_pair_key_uidx": {
+          "name": "friend_link_pair_key_uidx",
+          "columns": [
+            {
+              "expression": "pair_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "friend_link_user_a_idx": {
+          "name": "friend_link_user_a_idx",
+          "columns": [
+            {
+              "expression": "user_a_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "friend_link_user_b_idx": {
+          "name": "friend_link_user_b_idx",
+          "columns": [
+            {
+              "expression": "user_b_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "friend_link_user_a_id_user_id_fk": {
+          "name": "friend_link_user_a_id_user_id_fk",
+          "tableFrom": "friend_link",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_a_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "friend_link_user_b_id_user_id_fk": {
+          "name": "friend_link_user_b_id_user_id_fk",
+          "tableFrom": "friend_link",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_b_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "friend_link_created_by_user_id_user_id_fk": {
+          "name": "friend_link_created_by_user_id_user_id_fk",
+          "tableFrom": "friend_link",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "friend_link_pair_key_unique": {
+          "name": "friend_link_pair_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "pair_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.group_settings": {
+      "name": "group_settings",
+      "schema": "",
+      "columns": {
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "default_currency": {
+          "name": "default_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INR'"
+        },
+        "simplify_debts": {
+          "name": "simplify_debts",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "group_settings_organization_id_organization_id_fk": {
+          "name": "group_settings_organization_id_organization_id_fk",
+          "tableFrom": "group_settings",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.invitation": {
+      "name": "invitation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "inviter_id": {
+          "name": "inviter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "invitation_organizationId_idx": {
+          "name": "invitation_organizationId_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invitation_email_idx": {
+          "name": "invitation_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invitation_organization_id_organization_id_fk": {
+          "name": "invitation_organization_id_organization_id_fk",
+          "tableFrom": "invitation",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "invitation_inviter_id_user_id_fk": {
+          "name": "invitation_inviter_id_user_id_fk",
+          "tableFrom": "invitation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "inviter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.member": {
+      "name": "member",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'member'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "member_organizationId_idx": {
+          "name": "member_organizationId_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "member_userId_idx": {
+          "name": "member_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "member_organization_id_organization_id_fk": {
+          "name": "member_organization_id_organization_id_fk",
+          "tableFrom": "member",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "member_user_id_user_id_fk": {
+          "name": "member_user_id_user_id_fk",
+          "tableFrom": "member",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.organization": {
+      "name": "organization",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logo": {
+          "name": "logo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "organization_slug_uidx": {
+          "name": "organization_slug_uidx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "organization_slug_unique": {
+          "name": "organization_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active_organization_id": {
+          "name": "active_organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "session_userId_idx": {
+          "name": "session_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.settlement": {
+      "name": "settlement",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "friend_link_id": {
+          "name": "friend_link_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payer_user_id": {
+          "name": "payer_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payee_user_id": {
+          "name": "payee_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'INR'"
+        },
+        "amount_minor": {
+          "name": "amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "settled_at": {
+          "name": "settled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "settlement_organization_idx": {
+          "name": "settlement_organization_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_friend_link_idx": {
+          "name": "settlement_friend_link_idx",
+          "columns": [
+            {
+              "expression": "friend_link_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_payer_idx": {
+          "name": "settlement_payer_idx",
+          "columns": [
+            {
+              "expression": "payer_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_payee_idx": {
+          "name": "settlement_payee_idx",
+          "columns": [
+            {
+              "expression": "payee_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_settled_at_idx": {
+          "name": "settlement_settled_at_idx",
+          "columns": [
+            {
+              "expression": "settled_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "settlement_organization_id_organization_id_fk": {
+          "name": "settlement_organization_id_organization_id_fk",
+          "tableFrom": "settlement",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_friend_link_id_friend_link_id_fk": {
+          "name": "settlement_friend_link_id_friend_link_id_fk",
+          "tableFrom": "settlement",
+          "tableTo": "friend_link",
+          "columnsFrom": [
+            "friend_link_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_payer_user_id_user_id_fk": {
+          "name": "settlement_payer_user_id_user_id_fk",
+          "tableFrom": "settlement",
+          "tableTo": "user",
+          "columnsFrom": [
+            "payer_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_payee_user_id_user_id_fk": {
+          "name": "settlement_payee_user_id_user_id_fk",
+          "tableFrom": "settlement",
+          "tableTo": "user",
+          "columnsFrom": [
+            "payee_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_created_by_user_id_user_id_fk": {
+          "name": "settlement_created_by_user_id_user_id_fk",
+          "tableFrom": "settlement",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.settlement_allocation": {
+      "name": "settlement_allocation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "settlement_id": {
+          "name": "settlement_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "friend_link_id": {
+          "name": "friend_link_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payer_user_id": {
+          "name": "payer_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payee_user_id": {
+          "name": "payee_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_minor": {
+          "name": "amount_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "allocation_order": {
+          "name": "allocation_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "settlement_allocation_settlement_idx": {
+          "name": "settlement_allocation_settlement_idx",
+          "columns": [
+            {
+              "expression": "settlement_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_allocation_organization_idx": {
+          "name": "settlement_allocation_organization_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_allocation_friend_link_idx": {
+          "name": "settlement_allocation_friend_link_idx",
+          "columns": [
+            {
+              "expression": "friend_link_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_allocation_payer_idx": {
+          "name": "settlement_allocation_payer_idx",
+          "columns": [
+            {
+              "expression": "payer_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "settlement_allocation_payee_idx": {
+          "name": "settlement_allocation_payee_idx",
+          "columns": [
+            {
+              "expression": "payee_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "settlement_allocation_settlement_id_settlement_id_fk": {
+          "name": "settlement_allocation_settlement_id_settlement_id_fk",
+          "tableFrom": "settlement_allocation",
+          "tableTo": "settlement",
+          "columnsFrom": [
+            "settlement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_allocation_organization_id_organization_id_fk": {
+          "name": "settlement_allocation_organization_id_organization_id_fk",
+          "tableFrom": "settlement_allocation",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_allocation_friend_link_id_friend_link_id_fk": {
+          "name": "settlement_allocation_friend_link_id_friend_link_id_fk",
+          "tableFrom": "settlement_allocation",
+          "tableTo": "friend_link",
+          "columnsFrom": [
+            "friend_link_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_allocation_payer_user_id_user_id_fk": {
+          "name": "settlement_allocation_payer_user_id_user_id_fk",
+          "tableFrom": "settlement_allocation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "payer_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "settlement_allocation_payee_user_id_user_id_fk": {
+          "name": "settlement_allocation_payee_user_id_user_id_fk",
+          "tableFrom": "settlement_allocation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "payee_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verification": {
+      "name": "verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "verification_identifier_idx": {
+          "name": "verification_identifier_idx",
+          "columns": [
+            {
+              "expression": "identifier",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

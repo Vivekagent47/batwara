@@ -58,6 +58,12 @@ function DashboardPage() {
       headerActions={
         <div className="flex items-center gap-2">
           <Link
+            to="/settle/new"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
+          >
+            Settle up
+          </Link>
+          <Link
             to="/expense/new"
             className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
@@ -118,6 +124,67 @@ function DashboardPage() {
               />
             </Link>
           ) : null}
+        </section>
+
+        <section className="dashboard-surface">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="font-heading text-xl">Suggested settlements</h2>
+            <Link
+              to="/settle/new"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary"
+            >
+              Open settle up
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-3.5"
+                strokeWidth={1.7}
+              />
+            </Link>
+          </div>
+
+          {data.suggestions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No pairwise settlements are suggested right now.
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {data.suggestions.slice(0, 4).map((entry) => (
+                <div
+                  key={entry.counterparty.id}
+                  className="dashboard-list-item flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      {entry.direction === "pay"
+                        ? `You should pay ${entry.counterparty.name}`
+                        : `${entry.counterparty.name} should pay you`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Batwara will apply this payment across your oldest shared
+                      balances first.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">
+                      {formatMoneyMinor(entry.amountMinor)}
+                    </p>
+                    <Link
+                      to="/settle/new"
+                      search={{
+                        counterpartyUserId: entry.counterparty.id,
+                        payerUserId: entry.payerUserId,
+                        payeeUserId: entry.payeeUserId,
+                        amountMinor: entry.amountMinor,
+                      }}
+                      className="inline-flex h-9 items-center rounded-xl border border-border bg-background px-3 text-xs font-medium hover:bg-muted/60"
+                    >
+                      Settle
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="dashboard-surface">
