@@ -1,4 +1,3 @@
-import { Component, Suspense, lazy } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   ArrowRight01Icon,
@@ -160,34 +159,6 @@ const faqItems = [
 
 const socialImageUrl = createAbsoluteUrl(siteConfig.socialImagePath)
 const homeUrl = createAbsoluteUrl("/")
-const LazyDeferredHeroScene = lazy(() =>
-  import("@/components/landing/deferred-hero-scene").then((mod) => ({
-    default: mod.DeferredHeroScene,
-  }))
-)
-
-class HeroSceneErrorBoundary extends Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error: unknown) {
-    console.error("Hero scene failed to render.", error)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <HeroSceneFallback />
-    }
-
-    return this.props.children
-  }
-}
 
 export const Route = createFileRoute("/")({
   ssr: true,
@@ -320,8 +291,8 @@ function LandingPage() {
           </div>
         </header>
 
-        <div className="grid flex-1 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
-          <div className="relative z-10 max-w-2xl">
+        <div className="grid flex-1 items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12">
+          <div className="relative z-10 max-w-2xl lg:max-w-xl">
             <div className="animate-batwara-float inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/75 px-4 py-2 text-sm text-foreground/75 shadow-[0_8px_24px_rgba(26,107,60,0.08)] backdrop-blur">
               <HugeiconsIcon
                 icon={SparklesIcon}
@@ -380,8 +351,8 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="relative min-h-[28rem] lg:min-h-[42rem]">
-            <div className="animate-batwara-drift absolute top-6 -left-5 z-10 rounded-[1.7rem] border border-white/75 bg-white/80 px-4 py-3 shadow-[0_16px_40px_rgba(28,28,24,0.08)] backdrop-blur">
+          <div className="relative min-h-[28rem] sm:min-h-[31rem] lg:min-h-[38rem]">
+            <div className="animate-batwara-drift absolute top-5 left-4 z-10 rounded-[1.7rem] border border-white/75 bg-white/84 px-4 py-3 shadow-[0_16px_40px_rgba(28,28,24,0.08)] backdrop-blur sm:left-6 lg:-left-4">
               <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 Shared expense tracker
               </p>
@@ -390,15 +361,11 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="absolute inset-0 rounded-[2rem] border border-white/60 bg-white/30 p-3 shadow-[0_24px_70px_rgba(26,107,60,0.14)]">
-              <HeroSceneErrorBoundary>
-                <Suspense fallback={<HeroSceneFallback />}>
-                  <LazyDeferredHeroScene />
-                </Suspense>
-              </HeroSceneErrorBoundary>
+            <div className="absolute inset-0 rounded-[2rem] border border-white/60 bg-white/30 p-3 shadow-[0_24px_70px_rgba(26,107,60,0.14)] lg:translate-y-2">
+              <HeroSceneFallback />
             </div>
 
-            <div className="animate-batwara-float absolute right-0 bottom-6 z-10 w-60 rounded-[1.75rem] border border-white/75 bg-[#f7f2e8]/88 p-4 shadow-[0_18px_42px_rgba(28,28,24,0.1)] backdrop-blur">
+            <div className="animate-batwara-float absolute right-6 bottom-5 z-10 hidden w-60 rounded-[1.75rem] border border-white/75 bg-[#f7f2e8]/90 p-4 shadow-[0_18px_42px_rgba(28,28,24,0.1)] backdrop-blur lg:block">
               <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 Search-ready use cases
               </p>

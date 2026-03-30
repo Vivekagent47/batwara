@@ -82,10 +82,6 @@ Important variables:
   Client-visible settlement feature flag fallback.
 - `VITE_ENABLE_DEVTOOLS`
   Enables TanStack devtools locally when set to `true`.
-- `VITE_ENABLE_HERO_SCENE`
-  Enables the homepage Three.js hero scene.
-- `VITE_ENABLE_HERO_SCENE_ON_MOBILE`
-  Allows the hero scene to load on mobile devices.
 
 The default example values are safe for local development. Settlement stays off unless one of the settlement flags is set to `true`.
 
