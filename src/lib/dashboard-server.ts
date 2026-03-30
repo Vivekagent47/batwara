@@ -24,6 +24,8 @@ import {
 } from "@/db/schema"
 import { auth } from "@/lib/auth"
 import { getServerAuthSession } from "@/lib/auth-session"
+import { parseDayInputAtUtcMidday } from "@/lib/date-only"
+import { canManageExpense } from "@/lib/expense-permissions"
 import {
   settlementsDisabledMessage,
   settlementsEnabled,
@@ -120,6 +122,15 @@ type SettlementCounterparty = {
   sharedGroupCount: number
 }
 
+type PendingInvitationItem = {
+  id: string
+  organizationName: string
+  invitedEmail: string
+  role: string
+  createdAt: Date
+  expiresAt: Date
+}
+
 type UserLookup = Map<string, LedgerUser>
 
 const GROUP_EXPENSE_PAGE_SIZE = 15
@@ -128,6 +139,45 @@ const SETTLEMENT_ALLOCATION_TABLE = "settlement_allocation"
 
 function safeDate(value: Date | null | undefined) {
   return value ?? new Date()
+}
+
+async function getPendingInvitationsForUser(
+  email: string
+): Promise<Array<PendingInvitationItem>> {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    return []
+  }
+
+  const now = new Date()
+  const rows = await db
+    .select({
+      id: invitation.id,
+      organizationName: organization.name,
+      invitedEmail: invitation.email,
+      role: invitation.role,
+      createdAt: invitation.createdAt,
+      expiresAt: invitation.expiresAt,
+    })
+    .from(invitation)
+    .innerJoin(organization, eq(invitation.organizationId, organization.id))
+    .where(
+      and(
+        eq(invitation.email, normalizedEmail),
+        eq(invitation.status, "pending"),
+        gt(invitation.expiresAt, now)
+      )
+    )
+    .orderBy(desc(invitation.createdAt))
+
+  return rows.map((entry) => ({
+    id: entry.id,
+    organizationName: entry.organizationName,
+    invitedEmail: entry.invitedEmail,
+    role: entry.role ?? "member",
+    createdAt: safeDate(entry.createdAt),
+    expiresAt: safeDate(entry.expiresAt),
+  }))
 }
 
 function toCurrencyCode(value: string | undefined) {
@@ -1021,6 +1071,7 @@ async function getExpenseContextForUser(userId: string, expenseId: string) {
       totalAmountMinor: expense.totalAmountMinor,
       splitMethod: expense.splitMethod,
       splitMeta: expense.splitMeta,
+      createdByUserId: expense.createdByUserId,
       incurredAt: expense.incurredAt,
       createdAt: expense.createdAt,
       updatedAt: expense.updatedAt,
@@ -2130,9 +2181,10 @@ export const getAccountPageData = createServerFn({ method: "GET" }).handler(
       max: 100,
     })
 
-    const [groups, friends] = await Promise.all([
+    const [groups, friends, invitations] = await Promise.all([
       getUserGroups(currentUser.id),
       getUserFriends(currentUser.id),
+      getPendingInvitationsForUser(currentUser.email),
     ])
 
     return {
@@ -2141,6 +2193,7 @@ export const getAccountPageData = createServerFn({ method: "GET" }).handler(
         groupCount: groups.length,
         friendCount: friends.length,
       },
+      invitations,
     }
   }
 )
@@ -2349,8 +2402,14 @@ export const getExpenseDetailsData = createServerFn({ method: "GET" })
         netMinor: entry.paidAmountMinor - entry.owedAmountMinor,
       })),
       permissions: {
-        canEdit: true,
-        canDelete: true,
+        canEdit: canManageExpense(
+          currentUser.id,
+          context.expenseRow.createdByUserId
+        ),
+        canDelete: canManageExpense(
+          currentUser.id,
+          context.expenseRow.createdByUserId
+        ),
       },
     }
   })
@@ -2613,6 +2672,7 @@ export const createExpense = createServerFn({ method: "POST" })
     const contextId = data.contextId
     const title = data.title.trim()
     const totalAmountMinor = toMinorUnits(data.totalAmountMinor)
+    const normalizedIncurredAt = parseDayInputAtUtcMidday(data.incurredAt)
 
     if (!contextId) {
       throw new Error("Choose where this expense belongs.")
@@ -2669,7 +2729,7 @@ export const createExpense = createServerFn({ method: "POST" })
         totalAmountMinor,
         splitMethod: data.splitMethod,
         splitMeta: JSON.stringify(data.participants),
-        incurredAt: data.incurredAt ? new Date(data.incurredAt) : now,
+        incurredAt: normalizedIncurredAt ?? now,
         createdAt: now,
         updatedAt: now,
       })
@@ -2740,6 +2800,11 @@ export const updateExpense = createServerFn({ method: "POST" })
 
     const title = data.title.trim()
     const totalAmountMinor = toMinorUnits(data.totalAmountMinor)
+    const normalizedIncurredAt = parseDayInputAtUtcMidday(data.incurredAt)
+    const canManage = canManageExpense(
+      currentUser.id,
+      context.expenseRow.createdByUserId
+    )
 
     if (!title) {
       throw new Error("Expense title is required.")
@@ -2747,6 +2812,10 @@ export const updateExpense = createServerFn({ method: "POST" })
 
     if (totalAmountMinor <= 0) {
       throw new Error("Expense amount must be more than zero.")
+    }
+
+    if (!canManage) {
+      throw new Error("You cannot edit this expense.")
     }
 
     const memberIds = new Set(context.members.map((entry) => entry.id))
@@ -2780,7 +2849,7 @@ export const updateExpense = createServerFn({ method: "POST" })
           paidByUserId: data.paidByUserId,
           splitMethod: data.splitMethod,
           splitMeta: JSON.stringify(data.participants),
-          incurredAt: data.incurredAt ? new Date(data.incurredAt) : now,
+          incurredAt: normalizedIncurredAt ?? now,
           updatedAt: now,
         })
         .where(eq(expense.id, context.expenseRow.id))
@@ -2843,6 +2912,14 @@ export const deleteExpense = createServerFn({ method: "POST" })
     }
 
     const context = await getExpenseContextForUser(currentUser.id, expenseId)
+    const canManage = canManageExpense(
+      currentUser.id,
+      context.expenseRow.createdByUserId
+    )
+
+    if (!canManage) {
+      throw new Error("You cannot delete this expense.")
+    }
 
     const participantRows = await db
       .select({
