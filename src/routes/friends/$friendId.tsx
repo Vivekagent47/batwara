@@ -52,7 +52,7 @@ function FriendDetailsPage() {
     try {
       const result = await getFriendDetailsDataFn({
         data: {
-          friendId: data.friend.id,
+          friendId: params.friendId,
           offset: expenses.length,
         },
       })
@@ -68,11 +68,11 @@ function FriendDetailsPage() {
       setIsLoadingMoreExpenses(false)
     }
   }, [
-    data.friend.id,
     expenses.length,
     getFriendDetailsDataFn,
     hasMoreExpenses,
     isLoadingMoreExpenses,
+    params.friendId,
   ])
 
   useEffect(() => {

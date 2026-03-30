@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
@@ -30,6 +30,18 @@ type PendingInvitationRow = {
   role: string
   createdAt: Date
   expiresAt: Date | null
+}
+
+function getLoaderInvitations(data: unknown) {
+  if (!data || typeof data !== "object") {
+    return undefined
+  }
+
+  if (!("invitations" in data)) {
+    return undefined
+  }
+
+  return (data as { invitations?: unknown }).invitations
 }
 
 function safeDate(value: unknown) {
@@ -124,56 +136,9 @@ function AccountPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const [isSigningOut, setIsSigningOut] = useState(false)
-  const [invitations, setInvitations] = useState<Array<PendingInvitationRow>>([])
-  const [isLoadingInvitations, setIsLoadingInvitations] = useState(true)
   const [isRefreshingInvitations, setIsRefreshingInvitations] = useState(false)
   const [resolvingInvitationId, setResolvingInvitationId] = useState("")
-
-  const loadInvitations = async (options?: { showErrorToast?: boolean }) => {
-    const showErrorToast = options?.showErrorToast ?? true
-    try {
-      const { data: invitationData, error } =
-        await authClient.organization.listUserInvitations()
-
-      if (error) {
-        if (showErrorToast) {
-          toast.error("Could not load invitations", {
-            description: getAuthErrorMessage(error),
-          })
-        }
-        return
-      }
-
-      setInvitations(normalizePendingInvitations(invitationData))
-    } catch (error) {
-      if (showErrorToast) {
-        toast.error("Could not load invitations", {
-          description: getAuthErrorMessage(error),
-        })
-      }
-    } finally {
-      setIsLoadingInvitations(false)
-      setIsRefreshingInvitations(false)
-    }
-  }
-
-  useEffect(() => {
-    let isActive = true
-
-    const run = async () => {
-      if (!isActive) {
-        return
-      }
-
-      await loadInvitations()
-    }
-
-    void run()
-
-    return () => {
-      isActive = false
-    }
-  }, [])
+  const invitations = normalizePendingInvitations(getLoaderInvitations(data))
 
   const onResolveInvitation = async (
     entry: PendingInvitationRow,
@@ -200,7 +165,6 @@ function AccountPage() {
             description: getAuthErrorMessage(result.error),
           }
         )
-        await loadInvitations({ showErrorToast: false })
         return
       }
 
@@ -210,10 +174,7 @@ function AccountPage() {
           : `Rejected invite to ${entry.organizationName}`
       )
 
-      await Promise.all([
-        loadInvitations({ showErrorToast: false }),
-        router.invalidate(),
-      ])
+      await router.invalidate()
     } catch (error) {
       toast.error(
         action === "accept"
@@ -223,7 +184,6 @@ function AccountPage() {
           description: getAuthErrorMessage(error),
         }
       )
-      await loadInvitations({ showErrorToast: false })
     } finally {
       setResolvingInvitationId("")
       setIsRefreshingInvitations(false)
@@ -294,9 +254,7 @@ function AccountPage() {
             </span>
           </div>
 
-          {isLoadingInvitations ? (
-            <p className="text-sm text-muted-foreground">Loading invitations...</p>
-          ) : invitations.length === 0 ? (
+          {invitations.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No pending invitations.
             </p>

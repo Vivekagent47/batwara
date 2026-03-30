@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { formatDateAsDayInput } from "@/lib/date-only"
 import {
   deleteExpense,
   getExpenseDetailsData,
@@ -79,14 +80,6 @@ type ExpenseDetailsData = {
     canEdit: boolean
     canDelete: boolean
   }
-}
-
-function toDateInputValue(value: Date) {
-  const date = new Date(value)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
 }
 
 function formatInitialSplitValue(
@@ -173,8 +166,8 @@ function ExpenseEditPage() {
   const [splitMethod, setSplitMethod] = useState<ExpenseSplitMethod>(
     data.expense.splitMethod
   )
-  const [incurredDate, setIncurredDate] = useState(
-    toDateInputValue(data.expense.incurredAt)
+  const [incurredDate, setIncurredDate] = useState(() =>
+    formatDateAsDayInput(data.expense.incurredAt)
   )
   const [participants, setParticipants] = useState<
     Partial<Record<string, ParticipantState>>
@@ -188,7 +181,7 @@ function ExpenseEditPage() {
     setAmount((data.expense.totalAmountMinor / 100).toFixed(2))
     setPaidByUserId(data.expense.paidByUserId)
     setSplitMethod(data.expense.splitMethod)
-    setIncurredDate(toDateInputValue(data.expense.incurredAt))
+    setIncurredDate(formatDateAsDayInput(data.expense.incurredAt))
     setParticipants(buildInitialParticipantState(data))
   }, [data])
 
@@ -337,10 +330,6 @@ function ExpenseEditPage() {
       }
     })
 
-    const incurredAtIso = incurredDate
-      ? new Date(`${incurredDate}T00:00:00`).toISOString()
-      : undefined
-
     setIsSaving(true)
     try {
       await updateExpenseFn({
@@ -352,7 +341,7 @@ function ExpenseEditPage() {
           paidByUserId,
           splitMethod,
           participants: payloadParticipants,
-          incurredAt: incurredAtIso,
+          incurredAt: incurredDate || undefined,
         },
       })
 
@@ -392,7 +381,10 @@ function ExpenseEditPage() {
           params: { groupId: data.context.id },
         })
       } else {
-        await navigate({ to: "/friends" })
+        await navigate({
+          to: "/friends/$friendId",
+          params: { friendId: data.context.id },
+        })
       }
     } catch (error) {
       toast.error("Could not delete expense", {
@@ -407,6 +399,16 @@ function ExpenseEditPage() {
   const paidByLabel =
     data.members.find((entry) => entry.id === paidByUserId)?.name ??
     data.expense.paidByName
+  const backTarget =
+    data.context.type === "group"
+      ? {
+          to: "/expense/$expenseId" as const,
+          params: { expenseId: data.expense.id },
+        }
+      : {
+          to: "/friends/$friendId" as const,
+          params: { friendId: data.context.id },
+        }
 
   return (
     <DashboardShell
@@ -415,8 +417,8 @@ function ExpenseEditPage() {
       headerActions={
         <div className="flex items-center gap-2">
           <Link
-            to="/expense/$expenseId"
-            params={{ expenseId: data.expense.id }}
+            to={backTarget.to}
+            params={backTarget.params}
             className="inline-flex h-10 items-center rounded-xl border border-border bg-background px-4 text-sm hover:bg-muted/60"
           >
             Back

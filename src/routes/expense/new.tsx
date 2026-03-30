@@ -514,7 +514,10 @@ function CreateExpensePage() {
           params: { groupId: contextId },
         })
       } else {
-        await navigate({ to: "/friends" })
+        await navigate({
+          to: "/friends/$friendId",
+          params: { friendId: contextId },
+        })
       }
     } catch (error) {
       toast.error("Could not add expense", {

@@ -73,7 +73,10 @@ function ExpenseDetailsPage() {
           params: { groupId: data.context.id },
         })
       } else {
-        await navigate({ to: "/friends" })
+        await navigate({
+          to: "/friends/$friendId",
+          params: { friendId: data.context.id },
+        })
       }
     } catch (error) {
       toast.error("Could not delete expense", {
@@ -102,7 +105,8 @@ function ExpenseDetailsPage() {
             </Link>
           ) : (
             <Link
-              to="/friends"
+              to="/friends/$friendId"
+              params={{ friendId: data.context.id }}
               className="inline-flex h-10 items-center rounded-xl border border-border bg-background px-4 text-sm hover:bg-muted/60"
             >
               Back

@@ -58,6 +58,14 @@ type DemoSubmitResult = {
   clearStatus: () => void
 }
 
+type AuthFormMetaTo =
+  | "/"
+  | "/login"
+  | "/register"
+  | "/forgot-password"
+  | "/reset-password"
+  | "/verify-email"
+
 const authInputShellClasses =
   "group/auth-input relative overflow-hidden rounded-[1rem] border border-[#d8d0c2] bg-white/92 shadow-[0_12px_26px_rgba(28,28,24,0.04)] transition-all before:absolute before:top-3 before:bottom-3 before:left-0 before:w-[3px] before:rounded-full before:bg-transparent before:transition-colors focus-within:border-primary/35 focus-within:shadow-[0_0_0_3px_rgba(26,107,60,0.12)] focus-within:before:bg-primary"
 
@@ -421,17 +429,17 @@ export function AuthFormMeta({
 }: {
   prompt: string
   actionLabel: string
-  to: string
+  to: AuthFormMetaTo
 }) {
   return (
     <p className="text-sm leading-6 text-muted-foreground">
       {prompt ? `${prompt} ` : null}
-      <a
-        href={to}
+      <Link
+        to={to}
         className="font-medium text-primary underline-offset-4 hover:underline"
       >
         {actionLabel}
-      </a>
+      </Link>
     </p>
   )
 }
