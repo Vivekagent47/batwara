@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
-import { useDeferredValue, useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import type { FormEvent } from "react"
 
+import { SettlementPreviewCard } from "@/components/settle/settlement-preview-card"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,12 +18,12 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatMoneyMinor } from "@/lib/dashboard-format"
-import { cn } from "@/lib/utils"
 import {
   createSettlement,
   getSettlementComposerData,
   previewSettlement,
 } from "@/lib/dashboard-server"
+import { useSettlementPreview } from "@/hooks/use-settlement-preview"
 
 type SettleSearch = {
   counterpartyUserId?: string
@@ -38,17 +39,6 @@ type PaymentDirection = "you_pay" | "you_receive"
 const paymentDirectionLabels: Record<PaymentDirection, string> = {
   you_pay: "You pay",
   you_receive: "You receive",
-}
-
-type PreviewState = {
-  outstandingTotal: number
-  allocations: Array<{
-    scopeType: "group" | "friend"
-    scopeId: string
-    scopeName: string
-    amountMinor: number
-    allocationOrder: number
-  }>
 }
 
 function getInitialDirection(
@@ -148,83 +138,20 @@ function SettleNewPage() {
   const [amount, setAmount] = useState(formatAmountInput(search.amountMinor))
   const [note, setNote] = useState("")
   const [settledAt] = useState(getTodayInputValue)
-  const [preview, setPreview] = useState<PreviewState | null>(null)
-  const [previewError, setPreviewError] = useState<string | null>(null)
-  const [isPreviewPending, setIsPreviewPending] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const deferredAmount = useDeferredValue(amount)
-
-  const amountMinor = Math.round(Number.parseFloat(deferredAmount || "0") * 100)
-  const parsedAmountMinor = Math.round(Number.parseFloat(amount || "0") * 100)
   const isOutgoingSettlement = direction === "you_pay"
   const payerUserId =
     direction === "you_pay" ? data.user.id : counterpartyUserId
   const payeeUserId =
     direction === "you_pay" ? counterpartyUserId : data.user.id
-
-  useEffect(() => {
-    if (
-      !counterpartyUserId ||
-      !Number.isFinite(amountMinor) ||
-      amountMinor <= 0
-    ) {
-      setPreview(null)
-      setPreviewError(null)
-      setIsPreviewPending(false)
-      return
-    }
-
-    let cancelled = false
-    setIsPreviewPending(true)
-    setPreview(null)
-    setPreviewError(null)
-
-    void previewSettlementFn({
-      data: {
-        counterpartyUserId,
-        payerUserId,
-        payeeUserId,
-        amountMinor,
-      },
+  const { preview, previewError, isPreviewPending, parsedAmountMinor } =
+    useSettlementPreview({
+      counterpartyUserId,
+      payerUserId,
+      payeeUserId,
+      amount,
+      previewSettlement: previewSettlementFn,
     })
-      .then((result) => {
-        if (cancelled) {
-          return
-        }
-
-        setPreview({
-          outstandingTotal: result.outstandingTotal,
-          allocations: result.allocations,
-        })
-      })
-      .catch((error) => {
-        if (cancelled) {
-          return
-        }
-
-        setPreview(null)
-        setPreviewError(
-          error instanceof Error
-            ? error.message
-            : "Could not preview settlement."
-        )
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsPreviewPending(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [
-    amountMinor,
-    counterpartyUserId,
-    payeeUserId,
-    payerUserId,
-    previewSettlementFn,
-  ])
 
   const counterparty = data.counterparties.find(
     (entry) => entry.id === counterpartyUserId
@@ -484,87 +411,12 @@ function SettleNewPage() {
           </div>
         </form>
 
-        <aside className="dashboard-surface rounded-2xl">
-          <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-            Allocation preview
-          </p>
-          <h2 className="mt-2 font-heading text-2xl">
-            Where this payment lands
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Batwara applies pairwise settlements to the oldest shared balances
-            first. Group balances can change even when you do not choose a group
-            explicitly.
-          </p>
-
-          {isPreviewPending ? (
-            <p className="mt-4 rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
-              Previewing allocation...
-            </p>
-          ) : previewError ? (
-            <p className="mt-4 rounded-xl border border-dashed border-destructive/30 bg-destructive/5 px-3 py-4 text-sm text-destructive">
-              {previewError}
-            </p>
-          ) : preview ? (
-            <div className="mt-4 space-y-3">
-              <div
-                className={cn(
-                  "rounded-2xl border p-3",
-                  isOutgoingSettlement
-                    ? "border-destructive/25 bg-destructive/5"
-                    : "border-primary/25 bg-primary/5"
-                )}
-              >
-                <p
-                  className={cn(
-                    "text-xs uppercase",
-                    isOutgoingSettlement
-                      ? "text-destructive/80"
-                      : "text-primary/80"
-                  )}
-                >
-                  Net outstanding for this direction
-                </p>
-                <p
-                  className={cn(
-                    "mt-1 font-heading text-2xl",
-                    isOutgoingSettlement ? "text-destructive" : "text-primary"
-                  )}
-                >
-                  {formatMoneyMinor(preview.outstandingTotal)}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                {preview.allocations.map((entry) => (
-                  <div
-                    key={`${entry.scopeType}-${entry.scopeId}`}
-                    className="dashboard-list-item flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {entry.scopeName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {entry.scopeType === "group"
-                          ? "Group balance"
-                          : "Direct balance"}
-                      </p>
-                    </div>
-                    <p className="text-sm font-medium">
-                      {formatMoneyMinor(entry.amountMinor)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="mt-4 rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
-              Choose a counterparty and amount to preview how the payment will
-              be distributed.
-            </p>
-          )}
-        </aside>
+        <SettlementPreviewCard
+          preview={preview}
+          previewError={previewError}
+          isPreviewPending={isPreviewPending}
+          isOutgoingSettlement={isOutgoingSettlement}
+        />
       </div>
     </DashboardShell>
   )

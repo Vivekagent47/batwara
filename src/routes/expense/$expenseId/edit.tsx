@@ -4,10 +4,9 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import type { FormEvent } from "react"
 
-import type { ExpenseSplitMethod } from "@/lib/dashboard-server"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { SplitParticipantsEditor } from "@/components/expense/split-participants-editor"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -24,6 +23,14 @@ import {
   getExpenseDetailsData,
   updateExpense,
 } from "@/lib/dashboard-server"
+import type { ExpenseSplitMethod } from "@/lib/dashboard-server/types"
+import {
+  buildInitialParticipantState,
+  buildParticipantPayload,
+  getSplitSummary,
+  getSplitValidationError,
+  type ParticipantState,
+} from "@/lib/expense-form"
 
 export const Route = createFileRoute("/expense/$expenseId/edit")({
   loader: ({ params }) =>
@@ -41,11 +48,6 @@ export const Route = createFileRoute("/expense/$expenseId/edit")({
   }),
   component: ExpenseEditPage,
 })
-
-type ParticipantState = {
-  enabled: boolean
-  value: string
-}
 
 type ExpenseDetailsData = {
   context: {
@@ -82,74 +84,6 @@ type ExpenseDetailsData = {
   }
 }
 
-function formatInitialSplitValue(
-  splitMethod: ExpenseSplitMethod,
-  value: number | undefined,
-  fallbackOwedMinor: number,
-  totalAmountMinor: number
-) {
-  if (splitMethod === "equal") {
-    return ""
-  }
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    if (splitMethod === "exact") {
-      return (value / 100).toFixed(2)
-    }
-
-    return String(value)
-  }
-
-  if (splitMethod === "exact") {
-    return (fallbackOwedMinor / 100).toFixed(2)
-  }
-
-  if (splitMethod === "percentage") {
-    if (totalAmountMinor <= 0) {
-      return "0"
-    }
-
-    return ((fallbackOwedMinor / totalAmountMinor) * 100).toFixed(2)
-  }
-
-  return (fallbackOwedMinor / 100).toFixed(2)
-}
-
-function buildInitialParticipantState(data: ExpenseDetailsData) {
-  const splitInputMap = new Map<string, number | undefined>(
-    data.splitInput.map((entry) => [entry.userId, entry.value])
-  )
-  const includedIds = new Set<string>(
-    data.splitInput.length > 0
-      ? data.splitInput.map((entry) => entry.userId)
-      : data.participants.map((entry) => entry.userId)
-  )
-  const participantRows = new Map<string, (typeof data.participants)[number]>(
-    data.participants.map((entry) => [entry.userId, entry])
-  )
-
-  const next: Partial<Record<string, ParticipantState>> = {}
-
-  for (const member of data.members) {
-    const enabled = includedIds.has(member.id)
-    const participant = participantRows.get(member.id)
-
-    next[member.id] = {
-      enabled,
-      value: enabled
-        ? formatInitialSplitValue(
-            data.expense.splitMethod,
-            splitInputMap.get(member.id),
-            participant?.owedAmountMinor ?? 0,
-            data.expense.totalAmountMinor
-          )
-        : "",
-    }
-  }
-
-  return next
-}
-
 function ExpenseEditPage() {
   const data: ExpenseDetailsData = Route.useLoaderData()
   const navigate = useNavigate()
@@ -171,7 +105,15 @@ function ExpenseEditPage() {
   )
   const [participants, setParticipants] = useState<
     Partial<Record<string, ParticipantState>>
-  >(() => buildInitialParticipantState(data))
+  >(() =>
+    buildInitialParticipantState({
+      members: data.members,
+      splitInput: data.splitInput,
+      participants: data.participants,
+      splitMethod: data.expense.splitMethod,
+      totalAmountMinor: data.expense.totalAmountMinor,
+    })
+  )
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -182,7 +124,15 @@ function ExpenseEditPage() {
     setPaidByUserId(data.expense.paidByUserId)
     setSplitMethod(data.expense.splitMethod)
     setIncurredDate(formatDateAsDayInput(data.expense.incurredAt))
-    setParticipants(buildInitialParticipantState(data))
+    setParticipants(
+      buildInitialParticipantState({
+        members: data.members,
+        splitInput: data.splitInput,
+        participants: data.participants,
+        splitMethod: data.expense.splitMethod,
+        totalAmountMinor: data.expense.totalAmountMinor,
+      })
+    )
   }, [data])
 
   const enabledMembers = useMemo(
@@ -190,26 +140,15 @@ function ExpenseEditPage() {
     [data.members, participants]
   )
 
-  const splitSummary = useMemo(() => {
-    if (splitMethod === "equal") {
-      return `${enabledMembers.length} people`
-    }
-
-    const total = enabledMembers.reduce((sum, entry) => {
-      const value = Number.parseFloat(participants[entry.id]?.value ?? "0")
-      return Number.isFinite(value) ? sum + value : sum
-    }, 0)
-
-    if (splitMethod === "percentage") {
-      return `${total.toFixed(2)}% entered`
-    }
-
-    if (splitMethod === "shares") {
-      return `${total.toFixed(2)} shares entered`
-    }
-
-    return `${enabledMembers.length} values entered`
-  }, [enabledMembers, participants, splitMethod])
+  const splitSummary = useMemo(
+    () =>
+      getSplitSummary({
+        splitMethod,
+        enabledMembers,
+        participants,
+      }),
+    [enabledMembers, participants, splitMethod]
+  )
 
   const setParticipantEnabled = (userId: string, enabled: boolean) => {
     setParticipants((previous) => ({
@@ -229,61 +168,6 @@ function ExpenseEditPage() {
         value,
       },
     }))
-  }
-
-  const validateSplit = (amountMinor: number) => {
-    if (enabledMembers.length === 0) {
-      toast.error("Pick participants", {
-        description: "At least one participant is required.",
-      })
-      return false
-    }
-
-    if (splitMethod === "equal") {
-      return true
-    }
-
-    const values = enabledMembers.map((entry) =>
-      Number.parseFloat(participants[entry.id]?.value ?? "")
-    )
-
-    if (values.some((value) => !Number.isFinite(value) || value < 0)) {
-      toast.error("Split values are incomplete", {
-        description: "Enter valid values for selected participants.",
-      })
-      return false
-    }
-
-    if (splitMethod === "exact") {
-      const exactTotal = values.reduce(
-        (sum, value) => sum + Math.round(value * 100),
-        0
-      )
-      if (exactTotal !== amountMinor) {
-        toast.error("Exact split must match amount", {
-          description: "Exact values should add up to the expense amount.",
-        })
-        return false
-      }
-      return true
-    }
-
-    if (splitMethod === "percentage") {
-      const percentTotal = values.reduce((sum, value) => sum + value, 0)
-      if (Math.abs(percentTotal - 100) > 0.001) {
-        toast.error("Percentage split must add up to 100")
-        return false
-      }
-      return true
-    }
-
-    const shareTotal = values.reduce((sum, value) => sum + value, 0)
-    if (shareTotal <= 0) {
-      toast.error("Shares must add up to more than zero")
-      return false
-    }
-
-    return true
   }
 
   const onSave = async (event: FormEvent<HTMLFormElement>) => {
@@ -306,28 +190,23 @@ function ExpenseEditPage() {
       return
     }
 
-    if (!validateSplit(amountMinor)) {
+    const splitValidationError = getSplitValidationError({
+      splitMethod,
+      enabledMembers,
+      participants,
+      amountMinor,
+    })
+    if (splitValidationError) {
+      toast.error(splitValidationError.title, {
+        description: splitValidationError.description,
+      })
       return
     }
 
-    const payloadParticipants = enabledMembers.map((entry) => {
-      const rawValue = participants[entry.id]?.value ?? ""
-
-      if (splitMethod === "equal") {
-        return { userId: entry.id }
-      }
-
-      if (splitMethod === "exact") {
-        return {
-          userId: entry.id,
-          value: Math.round(Number.parseFloat(rawValue || "0") * 100),
-        }
-      }
-
-      return {
-        userId: entry.id,
-        value: Number.parseFloat(rawValue || "0"),
-      }
+    const payloadParticipants = buildParticipantPayload({
+      splitMethod,
+      enabledMembers,
+      participants,
     })
 
     setIsSaving(true)
@@ -538,44 +417,13 @@ function ExpenseEditPage() {
                 </h3>
                 <p className="text-xs text-muted-foreground">{splitSummary}</p>
               </div>
-              <div className="space-y-2">
-                {data.members.map((entry) => {
-                  const enabled = participants[entry.id]?.enabled ?? false
-                  return (
-                    <div
-                      key={entry.id}
-                      className="dashboard-list-item grid grid-cols-[auto_1fr_auto] items-center gap-2"
-                    >
-                      <Checkbox
-                        checked={enabled}
-                        onCheckedChange={(checked) =>
-                          setParticipantEnabled(entry.id, checked === true)
-                        }
-                        className="size-4"
-                      />
-                      <span className="text-sm">{entry.name}</span>
-                      {splitMethod === "equal" ? null : (
-                        <Input
-                          value={participants[entry.id]?.value ?? ""}
-                          onChange={(event) =>
-                            setParticipantValue(entry.id, event.target.value)
-                          }
-                          inputMode="decimal"
-                          placeholder={
-                            splitMethod === "exact"
-                              ? "0.00"
-                              : splitMethod === "percentage"
-                                ? "%"
-                                : "shares"
-                          }
-                          className="h-9 w-24 rounded-lg border-input/80 bg-background/80 text-right"
-                          disabled={!enabled}
-                        />
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+              <SplitParticipantsEditor
+                members={data.members}
+                participants={participants}
+                splitMethod={splitMethod}
+                onEnabledChange={setParticipantEnabled}
+                onValueChange={setParticipantValue}
+              />
             </section>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
