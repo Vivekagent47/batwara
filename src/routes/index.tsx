@@ -18,6 +18,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { HeroSceneFallback } from "@/components/landing/hero-scene-fallback"
+import { getLandingPageAuthState } from "@/lib/auth-session"
 import {
   createFaqSchema,
   createOrganizationSchema,
@@ -162,6 +163,7 @@ const homeUrl = createAbsoluteUrl("/")
 
 export const Route = createFileRoute("/")({
   ssr: true,
+  loader: () => getLandingPageAuthState(),
   head: () => ({
     meta: [
       {
@@ -234,6 +236,8 @@ export const Route = createFileRoute("/")({
 })
 
 function LandingPage() {
+  const { isAuthenticated } = Route.useLoaderData()
+
   return (
     <main className="relative overflow-hidden">
       <section className="relative mx-auto flex min-h-svh w-full max-w-7xl flex-col px-5 pt-5 pb-16 sm:px-8 lg:px-10">
@@ -278,16 +282,22 @@ function LandingPage() {
               View on GitHub
             </a>
             <a
-              href="#cta"
+              href="#features"
+              className="hidden h-10 items-center gap-2 rounded-full border border-border bg-white/75 px-5 text-sm font-medium text-foreground transition-colors hover:bg-white sm:inline-flex"
+            >
+              Explore
+            </a>
+            <Link
+              to={isAuthenticated ? "/dashboard" : "/login"}
               className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Start exploring
+              {isAuthenticated ? "Go to dashboard" : "Log in"}
               <HugeiconsIcon
                 icon={ArrowRight01Icon}
                 className="size-4"
                 strokeWidth={1.5}
               />
-            </a>
+            </Link>
           </div>
         </header>
 
@@ -315,22 +325,22 @@ function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#features"
+              <Link
+                to={isAuthenticated ? "/dashboard" : "/login"}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Explore the product
+                {isAuthenticated ? "Go to dashboard" : "Log in"}
                 <HugeiconsIcon
                   icon={ArrowRight01Icon}
                   className="size-4"
                   strokeWidth={1.5}
                 />
-              </a>
+              </Link>
               <a
-                href="#faq"
+                href="#features"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-border bg-white/75 px-6 text-base text-foreground transition-colors hover:bg-white"
               >
-                Read the FAQ
+                Explore the product
               </a>
             </div>
 
@@ -771,22 +781,22 @@ function LandingPage() {
           </div>
 
           <div className="flex flex-col justify-center gap-3">
-            <a
-              href="#workflow"
+            <Link
+              to={isAuthenticated ? "/dashboard" : "/login"}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              See how it works
+              {isAuthenticated ? "Go to dashboard" : "Log in"}
               <HugeiconsIcon
                 icon={ArrowRight01Icon}
                 className="size-4"
                 strokeWidth={1.5}
               />
-            </a>
+            </Link>
             <a
-              href="#open-source"
+              href="#workflow"
               className="inline-flex h-12 items-center justify-center rounded-full border border-border bg-white/75 px-6 text-base text-foreground transition-colors hover:bg-white"
             >
-              Read the open-source plan
+              See how it works
             </a>
           </div>
         </div>

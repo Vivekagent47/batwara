@@ -17,7 +17,7 @@ export const Route = createFileRoute("/friends/$friendId")({
   head: () => ({
     meta: [
       {
-        title: "Friend Ledger | Batwara",
+        title: "Shared Ledger | Batwara",
       },
       {
         name: "robots",
@@ -27,6 +27,10 @@ export const Route = createFileRoute("/friends/$friendId")({
   }),
   component: FriendDetailsPage,
 })
+
+function formatSharedGroupLabel(count: number) {
+  return `${count} shared group${count === 1 ? "" : "s"}`
+}
 
 function FriendDetailsPage() {
   const data = Route.useLoaderData()
@@ -96,14 +100,19 @@ function FriendDetailsPage() {
 
   return (
     <DashboardShell
-      title={data.friend.name}
+      title={data.counterparty.name}
       truncateTitle
+      description={
+        data.relationship.isFriend
+          ? "Direct friend ledger and shared group balances."
+          : "Shared-group pairwise ledger."
+      }
       headerActions={
         <div className="flex items-center gap-2">
           <Link
             to="/settle/new"
             search={{
-              counterpartyUserId: data.friend.id,
+              counterpartyUserId: data.counterparty.id,
               sourceFriendId: params.friendId,
             }}
             className="inline-flex h-10 items-center rounded-xl border border-border bg-background px-3 text-sm hover:bg-muted/55"
@@ -121,10 +130,43 @@ function FriendDetailsPage() {
     >
       <section className="dashboard-surface">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="dashboard-pill">{data.friend.email}</span>
+          <span className="dashboard-pill">{data.counterparty.email}</span>
+          <span className="dashboard-pill">
+            {data.relationship.isFriend ? "Direct friend" : "Shared balance"}
+          </span>
+          {data.relationship.sharedGroupCount > 0 ? (
+            <span className="dashboard-pill">
+              {formatSharedGroupLabel(data.relationship.sharedGroupCount)}
+            </span>
+          ) : null}
           <span className="dashboard-pill">
             {expenses.length} expense{expenses.length === 1 ? "" : "s"}
           </span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+              Current balance
+            </p>
+            {data.summary ? (
+              <p
+                className={`mt-1 text-lg font-medium ${getBalanceToneByDirection(data.summary.direction)}`}
+              >
+                {data.summary.direction === "pay" ? "You owe " : "You get "}
+                {formatMoneyMinor(data.summary.amountMinor)}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">Balanced</p>
+            )}
+          </div>
+
+          {!data.relationship.isFriend ? (
+            <p className="max-w-sm text-xs leading-5 text-muted-foreground">
+              This ledger is visible because you and {data.counterparty.name} share
+              at least one group balance.
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -134,7 +176,7 @@ function FriendDetailsPage() {
         <div className="mt-3 space-y-2">
           {expenses.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border px-3 py-5 text-sm text-muted-foreground">
-              No shared expenses between you and {data.friend.name} yet.
+              No shared expenses between you and {data.counterparty.name} yet.
             </p>
           ) : (
             expenses.map((entry) => (

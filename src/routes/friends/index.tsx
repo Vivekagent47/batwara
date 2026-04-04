@@ -46,6 +46,10 @@ export const Route = createFileRoute("/friends/")({
   component: FriendsPage,
 })
 
+function formatSharedGroupLabel(count: number) {
+  return `${count} shared group${count === 1 ? "" : "s"}`
+}
+
 function AddFriendLedgerModal({
   open,
   onOpenChange,
@@ -147,6 +151,7 @@ function FriendsPage() {
   return (
     <DashboardShell
       title="Friends"
+      description="Direct friend ledgers and pairwise balances from shared groups."
       headerActions={
         <Button
           type="button"
@@ -161,51 +166,63 @@ function FriendsPage() {
         <div className="space-y-2.5">
           {data.friends.length === 0 ? (
             <div className="dashboard-empty space-y-2.5">
-              <p>No friends yet.</p>
+              <p>No shared ledgers yet.</p>
               <Button
                 type="button"
                 className="h-10 rounded-xl"
                 onClick={() => setCreateOpen(true)}
               >
-                Add your first friend
+                Add a friend
               </Button>
             </div>
           ) : (
             data.friends.map((entry) => (
               <Link
-                key={entry.id}
+                key={entry.routeKey}
                 to="/friends/$friendId"
-                params={{ friendId: entry.id }}
+                params={{ friendId: entry.routeKey }}
                 className="group block rounded-2xl border border-border/70 bg-background/85 px-3 py-3 transition-colors hover:border-primary/35 hover:bg-muted/35 sm:px-3.5 sm:py-3.5"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground sm:text-base">
                       {entry.otherUser.name}
                     </p>
-                    <p className="mt-1 truncate text-xs text-muted-foreground">
-                      {entry.otherUser.email}
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="truncate">{entry.otherUser.email}</span>
+                      <span className="rounded-full border border-border/70 bg-background/90 px-2 py-0.5 text-[11px]">
+                        {entry.isFriend ? "Friend" : "Shared balance"}
+                      </span>
+                      {entry.sharedGroupCount > 0 ? (
+                        <span className="rounded-full border border-border/70 bg-background/90 px-2 py-0.5 text-[11px]">
+                          {formatSharedGroupLabel(entry.sharedGroupCount)}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                  {entry.summary ? (
-                    <p
-                      className={`min-w-26 text-right text-xs font-medium [font-variant-numeric:tabular-nums] ${getBalanceToneByDirection(entry.summary.direction)}`}
-                    >
-                      {entry.summary.direction === "pay"
-                        ? "You owe "
-                        : "You get "}
-                      {formatMoneyMinor(entry.summary.amountMinor)}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Balanced</p>
-                  )}
-                  <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-foreground">
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      className="size-4"
-                      strokeWidth={1.7}
-                    />
-                  </span>
+                  <div className="flex shrink-0 items-start gap-2">
+                    {entry.summary ? (
+                      <p
+                        className={`min-w-26 text-right text-xs font-medium [font-variant-numeric:tabular-nums] ${getBalanceToneByDirection(entry.summary.direction)}`}
+                      >
+                        {entry.summary.direction === "pay"
+                          ? "You owe "
+                          : "You get "}
+                        {formatMoneyMinor(entry.summary.amountMinor)}
+                      </p>
+                    ) : (
+                      <p className="pt-1 text-xs text-muted-foreground">
+                        Balanced
+                      </p>
+                    )}
+                    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-foreground">
+                      <HugeiconsIcon
+                        icon={ArrowRight01Icon}
+                        className="size-4"
+                        strokeWidth={1.7}
+                      />
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))

@@ -24,7 +24,10 @@ const heroLedgerRows = [
 
 export function HeroSceneFallback() {
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_24%_28%,rgba(26,107,60,0.28),transparent_30%),radial-gradient(circle_at_76%_22%,rgba(202,142,45,0.24),transparent_28%),radial-gradient(circle_at_70%_72%,rgba(109,115,135,0.18),transparent_24%),linear-gradient(180deg,rgba(250,247,240,0.97),rgba(239,235,225,0.88))]">
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_24%_28%,rgba(26,107,60,0.28),transparent_30%),radial-gradient(circle_at_76%_22%,rgba(202,142,45,0.24),transparent_28%),radial-gradient(circle_at_70%_72%,rgba(109,115,135,0.18),transparent_24%),linear-gradient(180deg,rgba(250,247,240,0.97),rgba(239,235,225,0.88))]"
+    >
       <div className="paper-grid pointer-events-none absolute inset-0 opacity-[0.14]" />
       <div className="animate-batwara-ambient absolute -top-14 right-6 h-40 w-40 rounded-full bg-[rgba(202,142,45,0.14)] blur-3xl" />
       <div className="animate-batwara-ambient-delayed absolute bottom-8 left-5 h-44 w-44 rounded-full bg-primary/12 blur-3xl" />
