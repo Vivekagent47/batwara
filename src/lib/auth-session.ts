@@ -1,8 +1,14 @@
+import { createServerFn } from "@tanstack/react-start"
 import { getRequest } from "@tanstack/react-start/server"
 
-import { auth } from "@/lib/auth"
+async function getSessionForRequest(request: Request) {
+  const { auth } = await import("@/lib/auth")
+  return auth.api.getSession({
+    headers: new Headers(request.headers),
+  })
+}
 
-type ServerAuthSession = Awaited<ReturnType<typeof auth.api.getSession>>
+type ServerAuthSession = Awaited<ReturnType<typeof getSessionForRequest>>
 
 const sessionByRequest = new WeakMap<Request, Promise<ServerAuthSession>>()
 
@@ -13,9 +19,17 @@ export async function getServerAuthSession() {
     return cached
   }
 
-  const pending = auth.api.getSession({
-    headers: new Headers(request.headers),
-  })
+  const pending = getSessionForRequest(request)
   sessionByRequest.set(request, pending)
   return pending
 }
+
+export const getLandingPageAuthState = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const session = await getServerAuthSession()
+
+    return {
+      isAuthenticated: Boolean(session?.user),
+    }
+  }
+)

@@ -1,5 +1,3 @@
-import "dotenv/config"
-
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { haveIBeenPwned, organization } from "better-auth/plugins"
