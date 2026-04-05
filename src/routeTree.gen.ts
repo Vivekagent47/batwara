@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrivacyIndexRouteImport } from './routes/privacy/index'
 import { Route as GroupsIndexRouteImport } from './routes/groups/index'
 import { Route as FriendsIndexRouteImport } from './routes/friends/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
@@ -44,6 +45,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyIndexRoute = PrivacyIndexRouteImport.update({
+  id: '/privacy/',
+  path: '/privacy/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GroupsIndexRoute = GroupsIndexRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/friends/': typeof FriendsIndexRoute
   '/groups/': typeof GroupsIndexRoute
+  '/privacy/': typeof PrivacyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/expense/$expenseId/edit': typeof ExpenseExpenseIdEditRoute
   '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/friends': typeof FriendsIndexRoute
   '/groups': typeof GroupsIndexRoute
+  '/privacy': typeof PrivacyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/expense/$expenseId/edit': typeof ExpenseExpenseIdEditRoute
   '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/friends/': typeof FriendsIndexRoute
   '/groups/': typeof GroupsIndexRoute
+  '/privacy/': typeof PrivacyIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/expense/$expenseId/edit': typeof ExpenseExpenseIdEditRoute
   '/groups/$groupId/settings': typeof GroupsGroupIdSettingsRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/friends/'
     | '/groups/'
+    | '/privacy/'
     | '/api/auth/$'
     | '/expense/$expenseId/edit'
     | '/groups/$groupId/settings'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/friends'
     | '/groups'
+    | '/privacy'
     | '/api/auth/$'
     | '/expense/$expenseId/edit'
     | '/groups/$groupId/settings'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/friends/'
     | '/groups/'
+    | '/privacy/'
     | '/api/auth/$'
     | '/expense/$expenseId/edit'
     | '/groups/$groupId/settings'
@@ -293,6 +305,7 @@ export interface RootRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
   FriendsIndexRoute: typeof FriendsIndexRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
+  PrivacyIndexRoute: typeof PrivacyIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   authForgotPasswordIndexRoute: typeof authForgotPasswordIndexRoute
   authLoginIndexRoute: typeof authLoginIndexRoute
@@ -322,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy/': {
+      id: '/privacy/'
+      path: '/privacy'
+      fullPath: '/privacy/'
+      preLoaderRoute: typeof PrivacyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/groups/': {
@@ -490,6 +510,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
   FriendsIndexRoute: FriendsIndexRoute,
   GroupsIndexRoute: GroupsIndexRoute,
+  PrivacyIndexRoute: PrivacyIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   authForgotPasswordIndexRoute: authForgotPasswordIndexRoute,
   authLoginIndexRoute: authLoginIndexRoute,
