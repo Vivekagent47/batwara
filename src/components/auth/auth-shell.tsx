@@ -129,6 +129,14 @@ export function AuthShell({
 
             <div className="mt-8 border-t border-border/70 pt-6 text-sm text-muted-foreground">
               {footer}
+              <div className="mt-4 flex flex-wrap gap-4 text-xs">
+                <Link
+                  to="/privacy"
+                  className="transition-colors hover:text-foreground"
+                >
+                  Privacy policy
+                </Link>
+              </div>
             </div>
           </section>
 
