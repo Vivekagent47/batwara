@@ -10,6 +10,12 @@ export const siteConfig = {
   appType:
     "Open-source expense splitting app, shared expense tracker, and split bills app for groups.",
   defaultUrl: appEnv.appUrl || FALLBACK_SITE_URL,
+  faviconPath: "/favicon.svg",
+  faviconIcoPath: "/favicon.ico",
+  faviconPngPath: "/favicon-32x32.png",
+  icon192Path: "/icon-192.png",
+  icon512Path: "/icon-512.png",
+  appleTouchIconPath: "/apple-touch-icon.png",
   socialImagePath: "/og-image.svg",
   manifestPath: "/manifest.json",
   keywords: [

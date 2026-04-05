@@ -1,11 +1,11 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
-  BookOpenTextIcon,
   CheckmarkCircle02Icon,
   SecurityCheckIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { BrandMark } from "@/components/brand-mark"
 import { createAbsoluteUrl, siteConfig } from "@/lib/site-config"
 
 const effectiveDate = "April 5, 2026"
@@ -305,7 +305,11 @@ function PrivacyPolicyPage() {
               to="/"
               className="inline-flex items-center gap-3 rounded-full border border-border/70 bg-white/85 px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-white"
             >
-              <span className="font-heading text-xl text-primary">Batwara</span>
+              <BrandMark
+                size="md"
+                iconContainerClassName="shadow-none"
+                labelClassName="text-primary"
+              />
             </Link>
 
             <div className="flex flex-wrap gap-2 text-xs font-medium tracking-[0.14em] uppercase">
@@ -787,13 +791,13 @@ function PrivacyPolicyPage() {
 
             <section className="rounded-[2rem] border border-border/70 bg-[#1d241e] px-6 py-8 text-[#f5f1e8] shadow-[0_20px_48px_rgba(28,28,24,0.07)] sm:px-8">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white">
-                  <HugeiconsIcon
-                    icon={BookOpenTextIcon}
-                    className="size-5"
-                    strokeWidth={1.5}
-                  />
-                </span>
+                <BrandMark
+                  showLabel={false}
+                  size="lg"
+                  iconContainerClassName="bg-white/10 text-white shadow-none"
+                  iconClassName="size-5"
+                  strokeWidth={1.5}
+                />
                 <div>
                   <p className="text-xs font-medium tracking-[0.16em] text-[#bfd6c7] uppercase">
                     Batwara

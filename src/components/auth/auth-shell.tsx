@@ -11,6 +11,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useEffect, useId, useRef, useState } from "react"
 import type { FormEvent, InputHTMLAttributes, ReactNode } from "react"
 
+import { BrandMark } from "@/components/brand-mark"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -110,7 +111,11 @@ export function AuthShell({
               to="/"
               className="inline-flex items-center gap-3 rounded-full border border-border/70 bg-white/85 px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-white"
             >
-              <span className="font-heading text-xl text-primary">Batwara</span>
+              <BrandMark
+                size="md"
+                iconContainerClassName="shadow-none"
+                labelClassName="text-primary"
+              />
             </Link>
 
             <div className="mt-10 max-w-xl">
@@ -143,12 +148,12 @@ export function AuthShell({
           <aside className="glass-panel flex flex-col justify-between rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(250,247,241,0.88),rgba(243,236,224,0.96))] p-6 shadow-[0_20px_48px_rgba(28,28,24,0.06)]">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-xs font-medium tracking-[0.14em] text-foreground/80 uppercase">
-                <HugeiconsIcon
-                  icon={SecurityCheckIcon}
-                  className="size-3.5 text-primary"
-                  strokeWidth={1.5}
+                <BrandMark
+                  size="sm"
+                  iconContainerClassName="h-7 w-7 shadow-none"
+                  labelClassName="text-sm text-foreground/85"
+                  strokeWidth={1.6}
                 />
-                Batwara
               </div>
               <h2 className="mt-5 font-heading text-3xl leading-tight text-foreground">
                 {asideTitle}

@@ -11,7 +11,7 @@ export function createOrganizationSchema() {
     "@type": "Organization",
     name: siteConfig.name,
     url: createAbsoluteUrl("/"),
-    logo: createAbsoluteUrl("/favicon.ico"),
+    logo: createAbsoluteUrl(siteConfig.icon512Path),
     description: siteConfig.description,
   }
 }

@@ -1,7 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   ArrowRight01Icon,
-  BookOpenTextIcon,
   BrainIcon,
   CheckmarkCircle02Icon,
   GithubIcon,
@@ -17,6 +16,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { BrandMark } from "@/components/brand-mark"
 import { HeroSceneFallback } from "@/components/landing/hero-scene-fallback"
 import { getLandingPageAuthState } from "@/lib/auth-session"
 import {
@@ -246,12 +246,7 @@ function LandingPage() {
             to="/"
             className="flex items-center gap-3 text-sm font-medium tracking-[0.12em] text-foreground/90 uppercase"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <HugeiconsIcon icon={BookOpenTextIcon} className="size-4" />
-            </span>
-            <span className="font-heading text-xl tracking-normal normal-case">
-              Batwara
-            </span>
+            <BrandMark size="md" />
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
@@ -808,11 +803,8 @@ function LandingPage() {
 
       <footer className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 pb-12 text-sm text-muted-foreground sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <HugeiconsIcon icon={BookOpenTextIcon} className="size-4" />
-          </span>
           <div>
-            <p className="font-heading text-xl text-foreground">Batwara</p>
+            <BrandMark size="md" />
             <p>
               Open-source expense splitting for groups, trips, roommates, and
               shared life.

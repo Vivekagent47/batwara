@@ -51,7 +51,23 @@ export const Route = createRootRoute({
       },
       {
         rel: "icon",
-        href: createAbsoluteUrl("/favicon.ico"),
+        type: "image/svg+xml",
+        href: createAbsoluteUrl(siteConfig.faviconPath),
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "32x32",
+        href: createAbsoluteUrl(siteConfig.faviconPngPath),
+      },
+      {
+        rel: "shortcut icon",
+        href: createAbsoluteUrl(siteConfig.faviconIcoPath),
+      },
+      {
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+        href: createAbsoluteUrl(siteConfig.appleTouchIconPath),
       },
     ],
   }),

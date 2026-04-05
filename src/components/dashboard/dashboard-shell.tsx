@@ -10,6 +10,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 import type { ReactNode } from "react"
 
+import { BrandMark } from "@/components/brand-mark"
 import { cn } from "@/lib/utils"
 
 type DashboardShellProps = {
@@ -106,8 +107,14 @@ export function DashboardShell({
       <div className="relative z-10 mx-auto flex w-full max-w-7xl gap-6 pt-2 sm:pt-3 md:pt-8">
         <aside className="sticky top-6 hidden h-[calc(100svh-4rem)] w-64 shrink-0 rounded-3xl border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,244,236,0.86))] p-5 shadow-sm backdrop-blur md:flex md:flex-col">
           <div className="mb-5 rounded-2xl border border-border/80 bg-background/90 px-3 py-3">
-            <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-              Batwara
+            <BrandMark
+              size="sm"
+              iconContainerClassName="rounded-2xl bg-primary/12 text-primary shadow-none"
+              labelClassName="text-lg"
+              strokeWidth={1.6}
+            />
+            <p className="mt-3 text-xs tracking-[0.14em] text-muted-foreground uppercase">
+              Workspace
             </p>
             <p className="mt-1 font-heading text-xl leading-none text-foreground">
               Dashboard
