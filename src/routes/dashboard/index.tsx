@@ -1,8 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
-import {
-  ArrowRight01Icon,
-  ReceiptTextIcon,
-} from "@hugeicons/core-free-icons"
+import { ArrowRight01Icon, ReceiptTextIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
@@ -87,7 +84,9 @@ function DashboardPage() {
               {netStatusLabel}
             </span>
           </div>
-          <p className={`mt-2 font-heading text-[2.3rem] leading-none ${netToneClass}`}>
+          <p
+            className={`mt-2 font-heading text-[2.3rem] leading-none ${netToneClass}`}
+          >
             {netAmountLabel}
           </p>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -105,8 +104,13 @@ function DashboardPage() {
             </p>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>{data.groups.length} group{data.groups.length === 1 ? "" : "s"}</span>
-            <span>{data.friends.length} friend ledger{data.friends.length === 1 ? "" : "s"}</span>
+            <span>
+              {data.groups.length} group{data.groups.length === 1 ? "" : "s"}
+            </span>
+            <span>
+              {data.friends.length} friend ledger
+              {data.friends.length === 1 ? "" : "s"}
+            </span>
             <span>{totalLedgers} active ledgers</span>
           </div>
           {hasPendingInvites ? (

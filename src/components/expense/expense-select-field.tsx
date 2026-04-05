@@ -33,7 +33,10 @@ export function ExpenseSelectField({
       <Label className="text-[13px] leading-none text-muted-foreground">
         {label}
       </Label>
-      <Select value={value} onValueChange={(nextValue) => onValueChange(nextValue ?? "")}>
+      <Select
+        value={value}
+        onValueChange={(nextValue) => onValueChange(nextValue ?? "")}
+      >
         <SelectTrigger className="h-11 w-full rounded-xl border-input/80 bg-background/75">
           <SelectValue placeholder={placeholder}>{selectedLabel}</SelectValue>
         </SelectTrigger>

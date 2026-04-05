@@ -1,6 +1,7 @@
 import { HandHelpingIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import type { GroupMemberManagementController } from "@/hooks/use-group-member-management"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,9 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type {
-  GroupMemberManagementController,
-} from "@/hooks/use-group-member-management"
 
 type GroupMemberManagementPanelProps = {
   variant: "page" | "modal"
@@ -60,7 +58,9 @@ export function GroupMemberManagementPanel({
   const sectionClassName =
     variant === "modal" ? "dashboard-surface" : "dashboard-surface mt-4"
   const inviteGridClassName =
-    variant === "modal" ? "grid gap-3 md:grid-cols-2" : "grid gap-4 lg:grid-cols-2"
+    variant === "modal"
+      ? "grid gap-3 md:grid-cols-2"
+      : "grid gap-4 lg:grid-cols-2"
   const addFriendsCardClassName =
     variant === "modal"
       ? "space-y-2.5 rounded-2xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,245,238,0.88))] p-3.5"
@@ -107,7 +107,8 @@ export function GroupMemberManagementPanel({
                 onValueChange={controller.handleFriendSelectionChange}
                 onOpenChange={controller.handleFriendSelectOpenChange}
                 disabled={
-                  controller.friendOptions.length === 0 || controller.isAddingFriend
+                  controller.friendOptions.length === 0 ||
+                  controller.isAddingFriend
                 }
               >
                 <SelectTrigger className="min-h-11 w-full rounded-xl border-input/80 bg-background/85">
@@ -147,7 +148,8 @@ export function GroupMemberManagementPanel({
                 type="button"
                 onClick={() => void controller.onAddFriends()}
                 disabled={
-                  controller.selectedFriendCount === 0 || controller.isAddingFriend
+                  controller.selectedFriendCount === 0 ||
+                  controller.isAddingFriend
                 }
                 className="h-10 rounded-xl"
               >
@@ -165,7 +167,9 @@ export function GroupMemberManagementPanel({
               </Label>
               <Input
                 value={controller.emailQuery}
-                onChange={(event) => controller.setEmailQuery(event.target.value)}
+                onChange={(event) =>
+                  controller.setEmailQuery(event.target.value)
+                }
                 placeholder="friend@example.com"
                 className="h-11 rounded-xl border-input/80 bg-background/80"
               />

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
+import type {
+  OrganizationInvitationRow,
+  OrganizationMemberRow,
+} from "@/lib/organization-members-client"
 import { authClient, getAuthErrorMessage } from "@/lib/auth-client"
 import {
   invalidateOrganizationPeopleCache,
   listOrganizationInvitations,
   listOrganizationMembers,
-} from "@/lib/organization-members-client"
-import type {
-  OrganizationInvitationRow,
-  OrganizationMemberRow,
 } from "@/lib/organization-members-client"
 
 export type GroupMemberFriendCandidate = {
@@ -58,9 +58,9 @@ export function useGroupMemberManagement({
   isMobile,
 }: UseGroupMemberManagementOptions): GroupMemberManagementController {
   const [members, setMembers] = useState<Array<OrganizationMemberRow>>([])
-  const [invitations, setInvitations] = useState<Array<OrganizationInvitationRow>>(
-    []
-  )
+  const [invitations, setInvitations] = useState<
+    Array<OrganizationInvitationRow>
+  >([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedFriendCandidateIds, setSelectedFriendCandidateIds] = useState<
     Array<string>
@@ -200,7 +200,9 @@ export function useGroupMemberManagement({
         })
       )
 
-      const successCount = inviteResults.filter((entry) => entry.succeeded).length
+      const successCount = inviteResults.filter(
+        (entry) => entry.succeeded
+      ).length
       const failedNames = inviteResults
         .filter((entry) => !entry.succeeded)
         .map((entry) => entry.candidate.name)
@@ -276,7 +278,9 @@ export function useGroupMemberManagement({
   }
 
   const onRemoveMember = async (entry: OrganizationMemberRow) => {
-    const isConfirmed = window.confirm(`Remove ${entry.name} from ${groupName}?`)
+    const isConfirmed = window.confirm(
+      `Remove ${entry.name} from ${groupName}?`
+    )
     if (!isConfirmed) {
       return
     }

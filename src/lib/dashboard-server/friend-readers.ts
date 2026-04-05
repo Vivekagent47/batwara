@@ -2,14 +2,7 @@
 import { and, desc, eq, gt, inArray, or } from "drizzle-orm"
 import { createServerFn } from "@tanstack/react-start"
 
-import { db } from "@/db"
-import { expense, expenseParticipant, organization, user } from "@/db/schema"
-import { enforceRateLimit } from "@/lib/rate-limit"
-
-import {
-  getPairwiseOutstandingSummary,
-  getPairwiseSummary,
-} from "./balances"
+import { getPairwiseOutstandingSummary, getPairwiseSummary } from "./balances"
 import { getAccessibleFriendLinkById, requireLedgerUser } from "./access"
 import { getUserGroups } from "./groups"
 import {
@@ -17,8 +10,11 @@ import {
   getSettlementCounterparties,
 } from "./settlements"
 import { safeDate } from "./core"
-import type { FriendPairExpenseItem } from "./types"
 import { FRIEND_EXPENSE_PAGE_SIZE as FRIEND_PAGE_SIZE } from "./types"
+import type { FriendPairExpenseItem } from "./types"
+import { enforceRateLimit } from "@/lib/rate-limit"
+import { expense, expenseParticipant, organization, user } from "@/db/schema"
+import { db } from "@/db"
 
 export const getFriendsPageData = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -126,14 +122,21 @@ export const getFriendDetailsData = createServerFn({ method: "GET" })
     })
 
     const offset = Math.max(0, Math.floor(data.offset ?? 0))
-    const requestedLimit = Math.max(1, Math.min(data.limit ?? FRIEND_PAGE_SIZE, 40))
+    const requestedLimit = Math.max(
+      1,
+      Math.min(data.limit ?? FRIEND_PAGE_SIZE, 40)
+    )
 
     const scopeClauses = []
     if (pairwiseContext.activeFriendLink) {
-      scopeClauses.push(eq(expense.friendLinkId, pairwiseContext.activeFriendLink.id))
+      scopeClauses.push(
+        eq(expense.friendLinkId, pairwiseContext.activeFriendLink.id)
+      )
     }
     if (pairwiseContext.sharedGroupIds.length > 0) {
-      scopeClauses.push(inArray(expense.organizationId, pairwiseContext.sharedGroupIds))
+      scopeClauses.push(
+        inArray(expense.organizationId, pairwiseContext.sharedGroupIds)
+      )
     }
 
     const counterpartOwedExpenseIds = db

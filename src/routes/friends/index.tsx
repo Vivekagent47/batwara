@@ -27,7 +27,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { formatMoneyMinor, getBalanceToneByDirection } from "@/lib/dashboard-format"
+import {
+  formatMoneyMinor,
+  getBalanceToneByDirection,
+} from "@/lib/dashboard-format"
 import { createFriendLedger, getFriendsPageData } from "@/lib/dashboard-server"
 
 export const Route = createFileRoute("/friends/")({

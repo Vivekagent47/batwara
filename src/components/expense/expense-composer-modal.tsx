@@ -47,7 +47,9 @@ export function ExpenseComposerModal({
               <DrawerDescription>{description}</DrawerDescription>
             ) : null}
           </DrawerHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+            {children}
+          </div>
           <DrawerFooter className="border-t border-border/70 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)]">
             {footer}
           </DrawerFooter>

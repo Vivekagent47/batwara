@@ -1,23 +1,6 @@
 // Settlement and pairwise-ledger helpers shared across reads and writes.
 import { and, eq, gt, inArray, or } from "drizzle-orm"
 
-import type {
-  PairwiseDebtRow,
-  SettlementImpactRow,
-  SettlementScopeType,
-} from "@/lib/settlement-ledger"
-import { db } from "@/db"
-import {
-  expense,
-  expenseParticipant,
-  member,
-  organization,
-  settlement,
-  settlementAllocation,
-  user,
-} from "@/db/schema"
-import { buildPairwiseSettlementPlan } from "@/lib/settlement-ledger"
-
 import { getUserLookup } from "./access"
 import {
   isMissingSettlementAllocationTableError,
@@ -29,7 +12,23 @@ import {
   getSharedGroupIdsBetweenUsers,
   getUserFriends,
 } from "./friends"
+import type {
+  PairwiseDebtRow,
+  SettlementImpactRow,
+  SettlementScopeType,
+} from "@/lib/settlement-ledger"
 import type { SettlementCounterparty } from "./types"
+import { db } from "@/db"
+import {
+  expense,
+  expenseParticipant,
+  member,
+  organization,
+  settlement,
+  settlementAllocation,
+  user,
+} from "@/db/schema"
+import { buildPairwiseSettlementPlan } from "@/lib/settlement-ledger"
 
 export async function getScopedSettlementImpactRows(args: {
   groupIds?: Array<string>

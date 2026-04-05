@@ -1,9 +1,7 @@
+import type { GroupMemberFriendCandidate } from "@/hooks/use-group-member-management"
 import { GroupMemberManagementPanel } from "@/components/groups/group-member-management-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
-import {
-  useGroupMemberManagement,
-  type GroupMemberFriendCandidate,
-} from "@/hooks/use-group-member-management"
+import { useGroupMemberManagement } from "@/hooks/use-group-member-management"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -57,20 +55,20 @@ export function ManageMembersModal({
           <DrawerHeader className="items-start px-4 pb-2 text-left">
             <DrawerTitle className="text-xl">Manage members</DrawerTitle>
             <DrawerDescription>
-            Invite, remove, and track pending members for {groupName}.
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
-          <GroupMemberManagementPanel
-            variant="modal"
-            viewerRole={viewerRole}
-            canManageMembers={canManageMembers}
-            isMobile={isMobile}
-            controller={memberManagement}
-          />
-        </div>
-        <DrawerFooter className="border-t border-border/70 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)]">
-          <Button
+              Invite, remove, and track pending members for {groupName}.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+            <GroupMemberManagementPanel
+              variant="modal"
+              viewerRole={viewerRole}
+              canManageMembers={canManageMembers}
+              isMobile={isMobile}
+              controller={memberManagement}
+            />
+          </div>
+          <DrawerFooter className="border-t border-border/70 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)]">
+            <Button
               type="button"
               variant="outline"
               className="h-10 rounded-xl"

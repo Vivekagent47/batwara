@@ -5,16 +5,16 @@ import {
   useMatchRoute,
 } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
-import {
-  ArrowRight01Icon,
-  Settings01Icon,
-} from "@hugeicons/core-free-icons"
+import { ArrowRight01Icon, Settings01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
-import { formatMoneyMinor, getBalanceToneByDirection } from "@/lib/dashboard-format"
+import {
+  formatMoneyMinor,
+  getBalanceToneByDirection,
+} from "@/lib/dashboard-format"
 import {
   getGroupDetailsData,
   getGroupExpensesPage,

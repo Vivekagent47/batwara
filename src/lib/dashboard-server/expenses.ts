@@ -1,14 +1,16 @@
 // Expense-context helpers shared across expense readers and mutations.
 import { eq } from "drizzle-orm"
 
-import { db } from "@/db"
-import { expense, organization, user } from "@/db/schema"
-
 import { assertGroupAccess } from "./access"
 import { getFriendContextForUser } from "./friends"
 import { getGroupMembers } from "./groups"
+import { expense, organization, user } from "@/db/schema"
+import { db } from "@/db"
 
-export async function getExpenseContextForUser(userId: string, expenseId: string) {
+export async function getExpenseContextForUser(
+  userId: string,
+  expenseId: string
+) {
   const expenseRows = await db
     .select({
       id: expense.id,

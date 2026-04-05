@@ -90,7 +90,8 @@ function ActivityPage() {
             {data.activity.map((entry) => {
               const badge = getActivityBadge(entry)
 
-              return entry.entityType === "expense" && entry.action !== "deleted" ? (
+              return entry.entityType === "expense" &&
+                entry.action !== "deleted" ? (
                 <Link
                   key={entry.id}
                   to="/expense/$expenseId"

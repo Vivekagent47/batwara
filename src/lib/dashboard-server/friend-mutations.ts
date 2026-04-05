@@ -2,13 +2,12 @@
 import { eq } from "drizzle-orm"
 import { createServerFn } from "@tanstack/react-start"
 
-import { db } from "@/db"
-import { activityLog, friendLink } from "@/db/schema"
-import { enforceRateLimit } from "@/lib/rate-limit"
-
 import { requireLedgerUser } from "./access"
 import { findUserByEmail } from "./mutation-shared"
 import { normalizePairKey } from "./core"
+import { db } from "@/db"
+import { activityLog, friendLink } from "@/db/schema"
+import { enforceRateLimit } from "@/lib/rate-limit"
 
 export const createFriendLedger = createServerFn({ method: "POST" })
   .inputValidator((input: { email: string }) => input)

@@ -17,7 +17,9 @@ function getMediaQueryList() {
   }
 
   if (!mediaQueryList) {
-    mediaQueryList = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    mediaQueryList = window.matchMedia(
+      `(max-width: ${MOBILE_BREAKPOINT - 1}px)`
+    )
   }
 
   currentMatch = mediaQueryList.matches

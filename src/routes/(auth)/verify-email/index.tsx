@@ -35,13 +35,11 @@ export const Route = createFileRoute("/(auth)/verify-email/")({
 function VerifyEmailPage() {
   const search = Route.useSearch()
   const [isPending, setIsPending] = useState(false)
-  const status:
-    | {
-        tone: "success" | "error" | "neutral"
-        title: string
-        body: string
-      }
-    | null =
+  const status: {
+    tone: "success" | "error" | "neutral"
+    title: string
+    body: string
+  } | null =
     search.status === "verified"
       ? {
           tone: "success",

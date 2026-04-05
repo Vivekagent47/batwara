@@ -2,16 +2,6 @@
 import { and, desc, eq } from "drizzle-orm"
 import { createServerFn } from "@tanstack/react-start"
 
-import { db } from "@/db"
-import {
-  expense,
-  expenseParticipant,
-  member,
-  organization,
-  user,
-} from "@/db/schema"
-import { enforceRateLimit } from "@/lib/rate-limit"
-
 import { getAccessibleActivities, getExpenseImpactLookup } from "./activity"
 import { buildNetMap, simplifyNetBalances } from "./balances"
 import { assertGroupAccess, requireLedgerUser } from "./access"
@@ -26,6 +16,15 @@ import { createFriendCandidateList } from "./reader-shared"
 import { getScopedSettlementImpactRows } from "./settlements"
 import { safeDate } from "./core"
 import { GROUP_EXPENSE_PAGE_SIZE as GROUP_PAGE_SIZE } from "./types"
+import { enforceRateLimit } from "@/lib/rate-limit"
+import {
+  expense,
+  expenseParticipant,
+  member,
+  organization,
+  user,
+} from "@/db/schema"
+import { db } from "@/db"
 
 export const getGroupsPageData = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -91,38 +90,44 @@ export const getGroupDetailsData = createServerFn({ method: "GET" })
       throw new Error("Group not found.")
     }
 
-    const [members, expenseRows, settlementRows, recentExpenseRows, friends, activity] =
-      await Promise.all([
-        getGroupMembers(data.groupId),
-        db
-          .select({
-            paidByUserId: expense.paidByUserId,
-            participantUserId: expenseParticipant.userId,
-            owedAmountMinor: expenseParticipant.owedAmountMinor,
-          })
-          .from(expenseParticipant)
-          .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
-          .where(eq(expense.organizationId, data.groupId)),
-        getScopedSettlementImpactRows({ groupIds: [data.groupId] }),
-        db
-          .select({
-            id: expense.id,
-            title: expense.title,
-            totalAmountMinor: expense.totalAmountMinor,
-            currency: expense.currency,
-            splitMethod: expense.splitMethod,
-            incurredAt: expense.incurredAt,
-            paidByUserId: expense.paidByUserId,
-            paidByName: user.name,
-          })
-          .from(expense)
-          .innerJoin(user, eq(expense.paidByUserId, user.id))
-          .where(eq(expense.organizationId, data.groupId))
-          .orderBy(desc(expense.incurredAt), desc(expense.id))
-          .limit(GROUP_PAGE_SIZE + 1),
-        getUserFriends(currentUser.id),
-        getAccessibleActivities([data.groupId], [], 24),
-      ])
+    const [
+      members,
+      expenseRows,
+      settlementRows,
+      recentExpenseRows,
+      friends,
+      activity,
+    ] = await Promise.all([
+      getGroupMembers(data.groupId),
+      db
+        .select({
+          paidByUserId: expense.paidByUserId,
+          participantUserId: expenseParticipant.userId,
+          owedAmountMinor: expenseParticipant.owedAmountMinor,
+        })
+        .from(expenseParticipant)
+        .innerJoin(expense, eq(expenseParticipant.expenseId, expense.id))
+        .where(eq(expense.organizationId, data.groupId)),
+      getScopedSettlementImpactRows({ groupIds: [data.groupId] }),
+      db
+        .select({
+          id: expense.id,
+          title: expense.title,
+          totalAmountMinor: expense.totalAmountMinor,
+          currency: expense.currency,
+          splitMethod: expense.splitMethod,
+          incurredAt: expense.incurredAt,
+          paidByUserId: expense.paidByUserId,
+          paidByName: user.name,
+        })
+        .from(expense)
+        .innerJoin(user, eq(expense.paidByUserId, user.id))
+        .where(eq(expense.organizationId, data.groupId))
+        .orderBy(desc(expense.incurredAt), desc(expense.id))
+        .limit(GROUP_PAGE_SIZE + 1),
+      getUserFriends(currentUser.id),
+      getAccessibleActivities([data.groupId], [], 24),
+    ])
 
     const net = buildNetMap(expenseRows, settlementRows)
     const transfers = simplifyNetBalances(net)
@@ -183,7 +188,10 @@ export const getGroupExpensesPage = createServerFn({ method: "GET" })
     await assertGroupAccess(currentUser.id, groupId)
 
     const offset = Math.max(0, Math.floor(data.offset ?? 0))
-    const requestedLimit = Math.max(1, Math.min(data.limit ?? GROUP_PAGE_SIZE, 40))
+    const requestedLimit = Math.max(
+      1,
+      Math.min(data.limit ?? GROUP_PAGE_SIZE, 40)
+    )
 
     const rows = await db
       .select({
@@ -274,10 +282,7 @@ export const getGroupSettingsData = createServerFn({ method: "GET" })
 
 export const getLedgerMembers = createServerFn({ method: "GET" })
   .inputValidator(
-    (input: {
-      contextType: "group" | "friend"
-      contextId: string
-    }) => input
+    (input: { contextType: "group" | "friend"; contextId: string }) => input
   )
   .handler(async ({ data }) => {
     const currentUser = await requireLedgerUser()

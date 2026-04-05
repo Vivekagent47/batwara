@@ -2,22 +2,21 @@
 import { eq } from "drizzle-orm"
 import { createServerFn } from "@tanstack/react-start"
 
-import { db } from "@/db"
-import { activityLog, expense, expenseParticipant, user } from "@/db/schema"
-import { parseDayInputAtUtcMidday } from "@/lib/date-only"
-import { canManageExpense } from "@/lib/expense-permissions"
-import { enforceRateLimit } from "@/lib/rate-limit"
-
 import { assertGroupAccess, requireLedgerUser } from "./access"
 import { getExpenseContextForUser } from "./expenses"
 import { getFriendContextForUser } from "./friends"
 import { getGroupMembers } from "./groups"
-import {
-  resolveSplit,
-  toCurrencyCode,
-  toMinorUnits,
-} from "./core"
-import type { ExpenseSplitMethod, LedgerContextType, SplitInputLine } from "./types"
+import { resolveSplit, toCurrencyCode, toMinorUnits } from "./core"
+import type {
+  ExpenseSplitMethod,
+  LedgerContextType,
+  SplitInputLine,
+} from "./types"
+import { enforceRateLimit } from "@/lib/rate-limit"
+import { canManageExpense } from "@/lib/expense-permissions"
+import { parseDayInputAtUtcMidday } from "@/lib/date-only"
+import { activityLog, expense, expenseParticipant, user } from "@/db/schema"
+import { db } from "@/db"
 
 export const createExpense = createServerFn({ method: "POST" })
   .inputValidator(
@@ -65,7 +64,8 @@ export const createExpense = createServerFn({ method: "POST" })
       await assertGroupAccess(currentUser.id, contextId)
       members = await getGroupMembers(contextId)
     } else {
-      members = (await getFriendContextForUser(currentUser.id, contextId)).members
+      members = (await getFriendContextForUser(currentUser.id, contextId))
+        .members
     }
     const memberIds = new Set(members.map((entry) => entry.id))
 

@@ -37,7 +37,7 @@ export function HeroSceneFallback() {
         2 payments to settle
       </div>
 
-      <div className="absolute left-4 right-4 bottom-5 rounded-[1.7rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,244,236,0.95))] p-4 shadow-[0_26px_55px_rgba(28,28,24,0.12)] backdrop-blur sm:left-6 sm:right-auto sm:w-[22rem] sm:p-5 lg:w-[24rem]">
+      <div className="absolute right-4 bottom-5 left-4 rounded-[1.7rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,244,236,0.95))] p-4 shadow-[0_26px_55px_rgba(28,28,24,0.12)] backdrop-blur sm:right-auto sm:left-6 sm:w-88 sm:p-5 lg:w-[24rem]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-medium tracking-[0.18em] text-primary uppercase">
@@ -46,7 +46,7 @@ export function HeroSceneFallback() {
             <h3 className="mt-2 font-heading text-3xl leading-none text-foreground">
               Goa trip
             </h3>
-            <p className="mt-2 max-w-[15rem] text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 max-w-60 text-sm leading-6 text-muted-foreground">
               One glance at who paid, what is pending, and the cleanest next
               settle-up.
             </p>
@@ -78,7 +78,9 @@ export function HeroSceneFallback() {
               </div>
 
               <div className="text-right">
-                <p className={`font-mono-ui text-sm ${row.tone}`}>{row.amount}</p>
+                <p className={`font-mono-ui text-sm ${row.tone}`}>
+                  {row.amount}
+                </p>
                 <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
                   {row.status}
                 </p>

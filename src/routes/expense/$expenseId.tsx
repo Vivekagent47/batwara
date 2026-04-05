@@ -141,7 +141,9 @@ function ExpenseDetailsPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Paid by</p>
-            <p className="mt-1 text-sm font-medium">{data.expense.paidByName}</p>
+            <p className="mt-1 text-sm font-medium">
+              {data.expense.paidByName}
+            </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Split</p>
@@ -158,7 +160,9 @@ function ExpenseDetailsPage() {
         </div>
 
         {data.expense.description ? (
-          <p className="mt-4 text-sm text-muted-foreground">{data.expense.description}</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            {data.expense.description}
+          </p>
         ) : null}
 
         <div className="mt-4">

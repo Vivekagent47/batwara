@@ -1,17 +1,16 @@
 // Pairwise balance helpers for summaries, suggestions, and net-map math.
 import { eq, inArray, or } from "drizzle-orm"
 
+import { getUserLookup } from "./access"
+import { getScopedSettlementImpactRows } from "./settlements"
 import type {
   PairwiseDebtRow,
   SettlementImpactRow,
 } from "@/lib/settlement-ledger"
+import type { PairwiseSuggestion, TransferSuggestion } from "./types"
 import { db } from "@/db"
 import { expense, expenseParticipant } from "@/db/schema"
 import { resolveOutstandingPairwiseDebtRows } from "@/lib/settlement-ledger"
-
-import { getUserLookup } from "./access"
-import { getScopedSettlementImpactRows } from "./settlements"
-import type { PairwiseSuggestion, TransferSuggestion } from "./types"
 
 export function simplifyNetBalances(netMap: Map<string, number>) {
   const creditors: Array<{ userId: string; amountMinor: number }> = []

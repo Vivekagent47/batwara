@@ -247,7 +247,9 @@ function GroupSettingsPage() {
         <section className="mt-4 rounded-2xl border border-border/80 bg-background/95 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="font-heading text-lg text-foreground">Leave group</h2>
+              <h2 className="font-heading text-lg text-foreground">
+                Leave group
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Past transactions stay unchanged. You won't be included in new
                 expenses or settlements.

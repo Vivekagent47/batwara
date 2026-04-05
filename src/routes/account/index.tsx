@@ -59,7 +59,9 @@ function safeDate(value: unknown) {
   return null
 }
 
-function normalizePendingInvitations(input: unknown): Array<PendingInvitationRow> {
+function normalizePendingInvitations(
+  input: unknown
+): Array<PendingInvitationRow> {
   const now = Date.now()
   const invitations = Array.isArray(input) ? input : []
 
@@ -272,7 +274,8 @@ function AccountPage() {
                         {entry.organizationName}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {entry.role} · invited {formatDateLabel(entry.createdAt)}
+                        {entry.role} · invited{" "}
+                        {formatDateLabel(entry.createdAt)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -282,7 +285,9 @@ function AccountPage() {
                         size="sm"
                         className="h-8 rounded-lg"
                         disabled={isResolving || isRefreshingInvitations}
-                        onClick={() => void onResolveInvitation(entry, "reject")}
+                        onClick={() =>
+                          void onResolveInvitation(entry, "reject")
+                        }
                       >
                         {isResolving ? "Working..." : "Reject"}
                       </Button>
@@ -291,7 +296,9 @@ function AccountPage() {
                         size="sm"
                         className="h-8 rounded-lg"
                         disabled={isResolving || isRefreshingInvitations}
-                        onClick={() => void onResolveInvitation(entry, "accept")}
+                        onClick={() =>
+                          void onResolveInvitation(entry, "accept")
+                        }
                       >
                         {isResolving ? "Working..." : "Accept"}
                       </Button>

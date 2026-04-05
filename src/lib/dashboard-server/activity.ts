@@ -1,11 +1,11 @@
 import { and, desc, eq, inArray, or } from "drizzle-orm"
 
+import { getUserLookup, safeDate } from "./helpers"
+import type { ActivityItem, PairwiseBalanceSummary } from "./types"
 import { db } from "@/db"
 import { activityLog, expense, expenseParticipant } from "@/db/schema"
 
 // Activity feed queries and expense-impact decoration for activity rows.
-import type { ActivityItem, PairwiseBalanceSummary } from "./types"
-import { getUserLookup, safeDate } from "./helpers"
 
 export async function getAccessibleActivities(
   groupIds: Array<string>,

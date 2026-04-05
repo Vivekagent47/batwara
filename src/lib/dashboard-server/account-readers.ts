@@ -1,11 +1,10 @@
 // Account page reader functions.
 import { createServerFn } from "@tanstack/react-start"
 
-import { enforceRateLimit } from "@/lib/rate-limit"
-
 import { getPendingInvitationsForUser, requireLedgerUser } from "./access"
 import { getUserFriends } from "./friends"
 import { getUserGroups } from "./groups"
+import { enforceRateLimit } from "@/lib/rate-limit"
 
 export const getAccountPageData = createServerFn({ method: "GET" }).handler(
   async () => {

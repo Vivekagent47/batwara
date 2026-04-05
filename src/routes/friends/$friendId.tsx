@@ -163,8 +163,8 @@ function FriendDetailsPage() {
 
           {!data.relationship.isFriend ? (
             <p className="max-w-sm text-xs leading-5 text-muted-foreground">
-              This ledger is visible because you and {data.counterparty.name} share
-              at least one group balance.
+              This ledger is visible because you and {data.counterparty.name}{" "}
+              share at least one group balance.
             </p>
           ) : null}
         </div>
@@ -201,7 +201,9 @@ function FriendDetailsPage() {
 
                 <div className="flex min-w-20 flex-col items-end justify-center text-right leading-tight">
                   <p className="text-[10px] text-muted-foreground uppercase">
-                    {entry.pairImpact.direction === "pay" ? "You owe" : "You get"}
+                    {entry.pairImpact.direction === "pay"
+                      ? "You owe"
+                      : "You get"}
                   </p>
                   <p
                     className={`mt-0.5 text-sm font-medium ${getBalanceToneByDirection(entry.pairImpact.direction)}`}

@@ -24,7 +24,9 @@ export function normalizePairKey(userAId: string, userBId: string) {
   return `${a}:${b}`
 }
 
-export function isMissingSettlementAllocationTableError(error: unknown): boolean {
+export function isMissingSettlementAllocationTableError(
+  error: unknown
+): boolean {
   const queue: Array<unknown> = [error]
 
   while (queue.length > 0) {

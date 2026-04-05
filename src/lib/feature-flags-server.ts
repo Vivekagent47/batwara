@@ -18,8 +18,7 @@ function parseBooleanEnv(value: string | undefined, fallback: boolean) {
 }
 
 const rawSettlementsFlag =
-  process.env.BATWARA_ENABLE_SETTLEMENTS ??
-  process.env.VITE_ENABLE_SETTLEMENTS
+  process.env.BATWARA_ENABLE_SETTLEMENTS ?? process.env.VITE_ENABLE_SETTLEMENTS
 
 export const settlementsEnabled = parseBooleanEnv(rawSettlementsFlag, false)
 

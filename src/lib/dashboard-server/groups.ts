@@ -1,6 +1,8 @@
 // Group-specific helpers for roles, membership, and group-level balances.
 import { and, eq, inArray, or } from "drizzle-orm"
 
+import { getScopedSettlementImpactRows } from "./settlements"
+import type { ContextMember, GroupInfo } from "./types"
 import { db } from "@/db"
 import {
   expense,
@@ -10,9 +12,6 @@ import {
   organization,
   user,
 } from "@/db/schema"
-
-import { getScopedSettlementImpactRows } from "./settlements"
-import type { ContextMember, GroupInfo } from "./types"
 
 const MANAGE_GROUP_MEMBER_ROLES = new Set(["owner", "admin"])
 
@@ -54,7 +53,10 @@ export function canManageGroupMembers(value: string) {
   )
 }
 
-export async function getGroupNetByUser(userId: string, groupIds: Array<string>) {
+export async function getGroupNetByUser(
+  userId: string,
+  groupIds: Array<string>
+) {
   if (groupIds.length === 0) {
     return new Map<string, number>()
   }

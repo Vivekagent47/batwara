@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  formatDateAsDayInput,
-  parseDayInputAtUtcMidday,
-} from "@/lib/date-only"
+import { formatDateAsDayInput, parseDayInputAtUtcMidday } from "@/lib/date-only"
 import { canManageExpense } from "@/lib/expense-permissions"
 
 describe("parseDayInputAtUtcMidday", () => {

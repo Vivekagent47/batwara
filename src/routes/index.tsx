@@ -361,7 +361,7 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="relative min-h-[28rem] sm:min-h-[31rem] lg:min-h-[38rem]">
+          <div className="relative min-h-112 sm:min-h-124 lg:min-h-152">
             <div className="animate-batwara-drift absolute top-5 left-4 z-10 rounded-[1.7rem] border border-white/75 bg-white/84 px-4 py-3 shadow-[0_16px_40px_rgba(28,28,24,0.08)] backdrop-blur sm:left-6 lg:-left-4">
               <p className="text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
                 Shared expense tracker
@@ -409,7 +409,7 @@ function LandingPage() {
 
       <section
         id="features"
-        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto mx-auto max-w-7xl scroll-mt-28 px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="grid gap-5 lg:grid-cols-3">
           {highlights.map(({ icon, title, body }) => (
@@ -418,7 +418,11 @@ function LandingPage() {
               className="glass-panel rounded-[1.75rem] border border-white/70 p-6 shadow-[0_18px_40px_rgba(28,28,24,0.06)]"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <HugeiconsIcon icon={icon} className="size-5" strokeWidth={1.5} />
+                <HugeiconsIcon
+                  icon={icon}
+                  className="size-5"
+                  strokeWidth={1.5}
+                />
               </div>
               <h2 className="mt-5 text-xl font-semibold text-foreground">
                 {title}
@@ -469,7 +473,7 @@ function LandingPage() {
 
       <section
         id="use-cases"
-        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto mx-auto max-w-7xl scroll-mt-28 px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="mb-10 max-w-3xl">
           <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -499,7 +503,7 @@ function LandingPage() {
 
       <section
         id="workflow"
-        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto mx-auto max-w-7xl scroll-mt-28 px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="mb-10 max-w-2xl">
           <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -634,7 +638,7 @@ function LandingPage() {
 
       <section
         id="open-source"
-        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto mx-auto max-w-7xl scroll-mt-28 px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
@@ -723,7 +727,7 @@ function LandingPage() {
 
       <section
         id="faq"
-        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10"
+        className="content-visibility-auto mx-auto max-w-7xl scroll-mt-28 px-5 py-16 sm:px-8 lg:px-10"
       >
         <div className="mb-10 max-w-3xl">
           <p className="text-xs font-medium tracking-[0.18em] text-primary uppercase">
@@ -763,7 +767,7 @@ function LandingPage() {
 
       <section
         id="cta"
-        className="content-visibility-auto scroll-mt-28 mx-auto max-w-7xl px-5 pt-8 pb-20 sm:px-8 lg:px-10"
+        className="content-visibility-auto mx-auto max-w-7xl scroll-mt-28 px-5 pt-8 pb-20 sm:px-8 lg:px-10"
       >
         <div className="grid gap-8 rounded-[2.1rem] border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.8),rgba(244,239,228,0.95))] px-6 py-8 shadow-[0_20px_48px_rgba(28,28,24,0.07)] sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-10">
           <div>

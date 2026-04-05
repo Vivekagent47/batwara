@@ -1,12 +1,11 @@
 // Friend-link helpers and shared-group lookups between users.
 import { and, desc, eq, inArray, or } from "drizzle-orm"
 
-import { db } from "@/db"
-import { friendLink, member } from "@/db/schema"
-
 import { getUserLookup } from "./access"
 import { normalizePairKey } from "./core"
 import type { FriendInfo, LedgerUser } from "./types"
+import { friendLink, member } from "@/db/schema"
+import { db } from "@/db"
 
 export async function getActiveFriendLinkBetweenUsers(
   userAId: string,

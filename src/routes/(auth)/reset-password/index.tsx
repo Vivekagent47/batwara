@@ -75,7 +75,8 @@ function ResetPasswordPage() {
       }
 
       toast.success("Password updated", {
-        description: "Your Batwara password has been changed. You can sign in now.",
+        description:
+          "Your Batwara password has been changed. You can sign in now.",
       })
       await navigate({ to: "/login" })
     } catch (error) {

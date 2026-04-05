@@ -1,10 +1,8 @@
+import type { ExpenseSplitMethod } from "@/lib/dashboard-server/types"
+import type { ParticipantState } from "@/lib/expense-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import {
-  getSplitInputPlaceholder,
-  type ParticipantState,
-} from "@/lib/expense-form"
-import type { ExpenseSplitMethod } from "@/lib/dashboard-server/types"
+import { getSplitInputPlaceholder } from "@/lib/expense-form"
 
 type SplitParticipantsEditorProps = {
   members: Array<{
@@ -35,14 +33,18 @@ export function SplitParticipantsEditor({
           >
             <Checkbox
               checked={enabled}
-              onCheckedChange={(checked) => onEnabledChange(entry.id, checked === true)}
+              onCheckedChange={(checked) =>
+                onEnabledChange(entry.id, checked === true)
+              }
               className="size-4"
             />
             <span className="text-sm">{entry.name}</span>
             {splitMethod === "equal" ? null : (
               <Input
                 value={participants[entry.id]?.value ?? ""}
-                onChange={(event) => onValueChange(entry.id, event.target.value)}
+                onChange={(event) =>
+                  onValueChange(entry.id, event.target.value)
+                }
                 inputMode="decimal"
                 placeholder={getSplitInputPlaceholder(splitMethod)}
                 className="h-9 w-24 rounded-lg border-input/80 bg-background/80 text-right"

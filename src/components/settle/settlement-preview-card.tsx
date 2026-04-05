@@ -1,6 +1,6 @@
+import type { SettlementPreviewState } from "@/hooks/use-settlement-preview"
 import { formatMoneyMinor } from "@/lib/dashboard-format"
 import { cn } from "@/lib/utils"
-import type { SettlementPreviewState } from "@/hooks/use-settlement-preview"
 
 type SettlementPreviewCardProps = {
   preview: SettlementPreviewState | null
@@ -22,8 +22,9 @@ export function SettlementPreviewCard({
       </p>
       <h2 className="mt-2 font-heading text-2xl">Where this payment lands</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Batwara applies pairwise settlements to the oldest shared balances first.
-        Group balances can change even when you do not choose a group explicitly.
+        Batwara applies pairwise settlements to the oldest shared balances
+        first. Group balances can change even when you do not choose a group
+        explicitly.
       </p>
 
       {isPreviewPending ? (

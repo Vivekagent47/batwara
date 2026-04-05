@@ -367,15 +367,18 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }))
 
-export const organizationRelations = relations(organization, ({ many, one }) => ({
-  members: many(member),
-  invitations: many(invitation),
-  expenses: many(expense),
-  settlements: many(settlement),
-  settlementAllocations: many(settlementAllocation),
-  activities: many(activityLog),
-  settings: one(groupSettings),
-}))
+export const organizationRelations = relations(
+  organization,
+  ({ many, one }) => ({
+    members: many(member),
+    invitations: many(invitation),
+    expenses: many(expense),
+    settlements: many(settlement),
+    settlementAllocations: many(settlementAllocation),
+    activities: many(activityLog),
+    settings: one(groupSettings),
+  })
+)
 
 export const memberRelations = relations(member, ({ one }) => ({
   organization: one(organization, {

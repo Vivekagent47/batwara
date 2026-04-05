@@ -2,18 +2,11 @@
 import { and, desc, eq, gt, inArray, or } from "drizzle-orm"
 import { redirect } from "@tanstack/react-router"
 
-import { db } from "@/db"
-import {
-  friendLink,
-  invitation,
-  member,
-  organization,
-  user,
-} from "@/db/schema"
-import { getServerAuthSession } from "@/lib/auth-session"
-
 import { safeDate } from "./core"
 import type { LedgerUser, PendingInvitationItem, UserLookup } from "./types"
+import { db } from "@/db"
+import { friendLink, invitation, member, organization, user } from "@/db/schema"
+import { getServerAuthSession } from "@/lib/auth-session"
 
 export async function requireLedgerUser() {
   const session = await getServerAuthSession()

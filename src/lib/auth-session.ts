@@ -24,12 +24,12 @@ export async function getServerAuthSession() {
   return pending
 }
 
-export const getLandingPageAuthState = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const session = await getServerAuthSession()
+export const getLandingPageAuthState = createServerFn({
+  method: "GET",
+}).handler(async () => {
+  const session = await getServerAuthSession()
 
-    return {
-      isAuthenticated: Boolean(session?.user),
-    }
+  return {
+    isAuthenticated: Boolean(session?.user),
   }
-)
+})

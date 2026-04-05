@@ -1,9 +1,16 @@
-import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import {
+  Link,
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import type { FormEvent } from "react"
 
+import type { ExpenseSplitMethod } from "@/lib/dashboard-server/types"
+import type { ParticipantState } from "@/lib/expense-form"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { SplitParticipantsEditor } from "@/components/expense/split-participants-editor"
 import { Button } from "@/components/ui/button"
@@ -23,13 +30,11 @@ import {
   getExpenseDetailsData,
   updateExpense,
 } from "@/lib/dashboard-server"
-import type { ExpenseSplitMethod } from "@/lib/dashboard-server/types"
 import {
   buildInitialParticipantState,
   buildParticipantPayload,
   getSplitSummary,
   getSplitValidationError,
-  type ParticipantState,
 } from "@/lib/expense-form"
 
 export const Route = createFileRoute("/expense/$expenseId/edit")({
@@ -372,10 +377,14 @@ function ExpenseEditPage() {
                 </Label>
                 <Select
                   value={paidByUserId}
-                  onValueChange={(nextValue) => setPaidByUserId(nextValue ?? "")}
+                  onValueChange={(nextValue) =>
+                    setPaidByUserId(nextValue ?? "")
+                  }
                 >
                   <SelectTrigger className="h-11 w-full rounded-xl border-input/80 bg-background/80">
-                    <SelectValue placeholder="Choose payer">{paidByLabel}</SelectValue>
+                    <SelectValue placeholder="Choose payer">
+                      {paidByLabel}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent align="start" sideOffset={6}>
                     {data.members.map((entry) => (
@@ -399,7 +408,9 @@ function ExpenseEditPage() {
                 }
               >
                 <SelectTrigger className="h-11 w-full rounded-xl border-input/80 bg-background/80">
-                  <SelectValue placeholder="Choose split method">{splitMethod}</SelectValue>
+                  <SelectValue placeholder="Choose split method">
+                    {splitMethod}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent align="start" sideOffset={6}>
                   <SelectItem value="equal">Equal</SelectItem>
@@ -427,7 +438,11 @@ function ExpenseEditPage() {
             </section>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button type="submit" className="h-10 rounded-xl" disabled={isSaving}>
+              <Button
+                type="submit"
+                className="h-10 rounded-xl"
+                disabled={isSaving}
+              >
                 {isSaving ? "Saving..." : "Save changes"}
               </Button>
             </div>
